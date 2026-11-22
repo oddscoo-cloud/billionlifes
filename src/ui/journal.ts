@@ -1,3 +1,4 @@
+import { parentLabels } from '../sim/family';
 import { demographics } from '../data/demographics';
 import { worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
@@ -63,7 +64,7 @@ const relationshipDescriptions = {
   neighbor: 'Знакомый по району. Помог герою освоиться после переезда.',
 };
 
-export function socialCircle(life: LifeSnapshot, back: () => void): HTMLElement {
+export function socialCircle(life: LifeSnapshot): HTMLElement {
   const family = life.birth.family;
   const house = { 'two-parents': 'Двое родителей', 'one-parent': 'Один родитель', 'other-guardians': 'Другие опекуны' };
   const means = { limited: 'Ограниченный', moderate: 'Средний', high: 'Высокий' };
@@ -73,6 +74,11 @@ export function socialCircle(life: LifeSnapshot, back: () => void): HTMLElement 
     ['Достаток семьи', means[family.means]],
     ['Здоровье при рождении', life.birth.startingHealth === 'typical' ? 'Обычное' : 'Требовалась поддержка'],
   ]));
+  const parents = life.parents.map((parent) => {
+    const age = ageLabel(parent.ageAtBirth + (parent.diedAt ?? life.ageInMonths));
+    return el('p', 'parent-line', el('strong', '', parentLabels[parent.role]),
+      el('span', '', parent.diedAt === undefined ? age : `Умер${parent.role === 'mother' ? 'ла' : ''} · ${age}`));
+  });
   const contacts = life.relationships.map((person) => {
     const memories = el('ol', 'chronicle', ...person.memories.slice(-6).reverse().map((memory) => el('li', '',
       el('span', 'event-age', ageLabel(memory.ageInMonths)),
@@ -80,12 +86,15 @@ export function socialCircle(life: LifeSnapshot, back: () => void): HTMLElement 
     const description = el('div', '', el('p', '', relationshipDescriptions[person.id]));
     if (person.country) description.append(el('p', 'helper', `Место знакомства — ${demographics.countries[person.country].name}.`));
     const content = [el('div', 'social-person', portrait(person.id), description), metric('Доверие', person.trust)];
-    const card = panel(peopleLabels[person.id], ...content, person.memories.length
+    const card = panel(person.id === 'caregiver' && life.parents.length ? 'Поддержка семьи' : peopleLabels[person.id], ...content, person.memories.length
       ? el('div', '', el('h3', '', 'Последние общие воспоминания'), memories)
       : el('p', 'helper', 'Общие воспоминания появятся по ходу жизни.'));
     card.classList.add('indicator', 'indicator-people');
     return card;
   });
-  return el('div', 'journal-screen', journalHeader('Семья и круг общения', back), household,
-    el('div', 'social-grid', ...contacts));
+  const details = el('details', 'social-details', el('summary', '', 'Детали семьи и общие воспоминания'),
+    household, ...contacts);
+  const closePeople = life.relationships.filter((person) => person.id !== 'caregiver' || !life.parents.length);
+  return panel('Круг общения', ...parents, ...closePeople.map((person) =>
+    el('p', 'parent-line', peopleLabels[person.id], el('span', '', `Доверие ${person.trust}`))), details);
 }

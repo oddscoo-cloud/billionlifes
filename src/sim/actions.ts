@@ -66,7 +66,7 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
   const { ageInMonths, status, development, countryOfResidence } = life;
   if (status.type === 'dead' || ageInMonths < 48) return [];
   if (status.type === 'decision') {
-    if (status.decision === 'first-childhood-activity' || status.decision === 'school-crisis') return [];
+    if (status.decision === 'first-childhood-activity' || status.decision === 'school-crisis' || status.decision === 'family-loss') return [];
     if (status.decision === 'teen-activity') return [option('school-club'), option('volunteer')];
     if (status.decision === 'later-life') {
       return development.employment === 'entry-level' || development.employment === 'specialist'

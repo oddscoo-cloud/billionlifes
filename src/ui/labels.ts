@@ -17,6 +17,7 @@ export const decisionLabels: Record<Extract<LifeStatus, { type: 'decision' }>['d
   'teen-activity': 'Занятие для подростка',
   'adult-path': 'Начало взрослой жизни',
   'later-life': 'Решение о жизни после 65',
+  'family-loss': 'Потеря родителя',
   'school-crisis': 'Трудности в учебной группе',
 };
 
@@ -42,6 +43,8 @@ export function ageLabel(months: number): string {
 
 export function eventLabel(event: LifeEvent): string {
   switch (event.type) {
+    case 'parent-death': return event.role === 'mother' ? 'Мама умерла' : 'Папа умер';
+    case 'family-response': return event.choice === 'support' ? 'Герой обратился за поддержкой' : 'Герой вспомнил хорошие моменты';
     case 'world': return worldEvents[event.id][0];
     case 'birth': return 'Началась жизнь';
     case 'childhood-year': return 'День рождения';
@@ -55,4 +58,13 @@ export function eventLabel(event: LifeEvent): string {
       return `${activities[event.action.id]} — ${outcome}`;
     }
   }
+}
+
+export function wealthLabel(funds: number): string {
+  if (funds <= 1) return 'Крайняя бедность';
+  if (funds <= 3) return 'Бедность';
+  if (funds <= 9) return 'Скромный достаток';
+  if (funds <= 24) return 'Достаток';
+  if (funds <= 59) return 'Обеспеченность';
+  return 'Богатство';
 }

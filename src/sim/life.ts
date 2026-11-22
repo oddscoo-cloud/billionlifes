@@ -1,3 +1,5 @@
+import { advanceParents, initialParents } from './family';
+import type { Parent, ParentRole, GriefChoice } from './family';
 import { monthlyMortality } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
 import { milestoneAt } from './actions';
@@ -26,14 +28,18 @@ export type LifeEvent = WorldEvent | ({
       readonly succeeded: boolean;
       readonly chance: number;
     }
+  | { readonly type: 'parent-death'; readonly role: ParentRole }
+  | { readonly type: 'family-response'; readonly choice: GriefChoice }
   | { readonly type: 'crisis'; readonly message: string; readonly choice?: CrisisChoice }
   | { readonly type: 'plan'; readonly plan: Plan | null }
   | { readonly type: 'childhood-choice'; readonly choice: ChildhoodChoice }
 ));
 
+export type Decision = 'first-childhood-activity' | 'school-crisis' | Milestone;
 export type LifeStatus =
   | { readonly type: 'active' }
-  | { readonly type: 'decision'; readonly decision: 'first-childhood-activity' | 'school-crisis' | Milestone }
+  | { readonly type: 'decision'; readonly decision: Decision }
+  | { readonly type: 'decision'; readonly decision: 'family-loss'; readonly resume?: Decision }
   | { readonly type: 'dead' };
 
 export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
@@ -43,6 +49,7 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
   readonly development: Development;
   readonly wellbeing: Wellbeing;
   readonly relationships: readonly Relationship[];
+  readonly parents: readonly Parent[];
   readonly diary: readonly DiaryEntry[];
   readonly chronicle: readonly LifeEvent[];
 }
@@ -51,6 +58,7 @@ export function startLife(newLife: NewLife): LifeSnapshot {
   return {
     ...newLife,
     diary: [],
+    parents: initialParents(newLife.birth.family, newLife.seed),
     wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false },
     relationships: initialRelationships(),
     development: initialDevelopment(newLife.birth.family.means),
@@ -77,13 +85,13 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
   }
 
   if (ageInMonths <= 48 && ageInMonths % 12 === 0) {
-    return {
+    return advanceParents({
       ...next,
       status: ageInMonths === 48
         ? { type: 'decision', decision: 'first-childhood-activity' }
         : next.status,
       chronicle: [...life.chronicle, { type: 'childhood-year', ageInMonths }],
-    };
+    });
   }
 
   const development = growMonth(life.development);
@@ -93,8 +101,9 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
     development,
     status: milestone ? { type: 'decision', decision: milestone } : next.status,
   });
-  return stepped.status.type === 'active' && stepped.chronicle === life.chronicle
-    ? advanceWorld(stepped) : stepped;
+  const withParents = advanceParents(stepped);
+  return withParents.status.type === 'active' && withParents.chronicle === life.chronicle
+    ? advanceWorld(withParents) : withParents;
 }
 
 export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {
@@ -114,6 +123,15 @@ export function resolveChildhoodChoice(life: LifeSnapshot, choice: ChildhoodChoi
     development: grow(life.development, choice === 'read-with-caregiver' ? 'study' : 'community', 3),
     chronicle: [...life.chronicle, { type: 'childhood-choice', ageInMonths: life.ageInMonths, choice }],
   };
+}
+
+export function advanceAuto(life: LifeSnapshot): LifeSnapshot {
+  let next = life;
+  for (let month = 0; month < 3 && next.status.type === 'active'; month += 1) {
+    next = advanceMonth(next);
+    if (next.chronicle.length !== life.chronicle.length) break;
+  }
+  return next;
 }
 
 export function advanceYear(life: LifeSnapshot): LifeSnapshot {

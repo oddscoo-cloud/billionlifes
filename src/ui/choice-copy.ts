@@ -11,12 +11,12 @@ export const planEffects: Record<Plan, string> = {
 };
 
 export const childhoodEffects: Record<ChildhoodChoice, string> = {
-  'read-with-caregiver': 'Развивает навык учёбы и укрепляет доверие опекуна.',
+  'read-with-caregiver': 'Развивает навык учёбы и укрепляет доверие в семье.',
   'play-with-peers': 'Развивает общение и помогает завести друга детства.',
 };
 
 export const crisisEffects: Record<CrisisChoice, string> = {
-  'ask-for-help': 'Поддержка опекуна улучшит настроение и запустит восстановление.',
+  'ask-for-help': 'Разговор с близкими улучшит настроение и запустит восстановление.',
   wait: 'Можно дать себе время. Если трудности сохранятся, через три месяца придётся выбрать снова.',
   'change-group': 'Смена окружения запустит постепенное восстановление.',
 };
@@ -26,6 +26,7 @@ export const decisionContext: Record<Extract<LifeStatus, { type: 'decision' }>['
   'teen-activity': 'Выберите занятие, которое станет ежемесячным планом.',
   'adult-path': 'Выберите, с чего начать взрослую жизнь. К учёбе или работе можно вернуться позже.',
   'later-life': 'Решите, как герой будет жить после 65 лет.',
+  'family-loss': 'Выберите, как герой переживёт потерю близкого.',
   'school-crisis': 'Выберите, как герой справится с трудностями в группе.',
 };
 

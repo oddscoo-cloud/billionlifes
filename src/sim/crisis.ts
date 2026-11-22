@@ -1,3 +1,4 @@
+import { familySupport } from './family';
 import type { LifeSnapshot } from './life';
 import { remember } from './relationships';
 
@@ -71,7 +72,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
 
 export function availableCrisisChoices(life: LifeSnapshot): readonly CrisisOption[] {
   if (life.status.type !== 'decision' || life.status.decision !== 'school-crisis') return [];
-  const choices: CrisisOption[] = [{ id: 'ask-for-help', label: 'Поговорить с опекуном' }];
+  const choices: CrisisOption[] = [{ id: 'ask-for-help', label: `Попросить поддержки · ${familySupport(life)}` }];
   if (life.wellbeing.phase === 'strain') choices.push({ id: 'wait', label: 'Пока понаблюдать' });
   else choices.push({ id: 'change-group', label: 'Перейти в другую учебную группу' });
   return choices;
@@ -83,10 +84,12 @@ export function resolveCrisisChoice(life: LifeSnapshot, choice: CrisisChoice): L
   const support = choice === 'ask-for-help';
   const caregiver = life.relationships.find(({ id }) => id === 'caregiver');
   const remembersReading = caregiver?.memories.some(({ kind }) => kind === 'shared-reading');
+  const speaker = familySupport(life);
+  const label = speaker[0]!.toUpperCase() + speaker.slice(1);
   const message = support
     ? remembersReading
-      ? 'Опекун: «Помнишь, как мы читали вместе? Я рядом. Давай поговорим».'
-      : 'Опекун: «Спасибо, что рассказал. Давай подумаем, как тебе помочь».'
+      ? `${label}: «Помнишь, как мы читали вместе? Я рядом. Давай поговорим».`
+      : `${label}: «Спасибо, что рассказал. Давай подумаем, как тебе помочь».`
     : choice === 'change-group'
       ? 'В новой группе можно постепенно освоиться.'
       : 'Герой решил пока отложить разговор.';

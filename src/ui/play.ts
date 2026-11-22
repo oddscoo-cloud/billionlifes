@@ -1,3 +1,6 @@
+import { yearlyPrecipitation } from '../data/households';
+import { familySupport, griefChoices, resolveGrief } from '../sim/family';
+import { socialCircle } from './journal';
 import { eventEffects, worldEvents } from '../data/world-events';
 import type { EventEffect } from '../data/world-events';
 import type { WorldEvent } from '../sim/world';
@@ -14,10 +17,9 @@ import type { LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import {
   ageLabel, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
-  peopleLabels, phaseLabels, planLabels, skillLabels,
+  peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
-import { portrait } from './portrait';
 
 export function metric(label: string, value: number): HTMLElement {
   const meter = el('meter');
@@ -25,12 +27,6 @@ export function metric(label: string, value: number): HTMLElement {
   meter.value = value;
   meter.setAttribute('aria-label', label);
   return el('div', 'metric', el('div', '', el('span', '', label), el('span', '', String(value))), meter);
-}
-
-export function relations(life: LifeSnapshot): HTMLElement {
-  const cards = life.relationships.map((person) => el('article', 'person', portrait(person.id),
-    el('div', '', el('h3', '', peopleLabels[person.id]), metric('Доверие', person.trust))));
-  return indicatorPanel('Близкие', 'people', ...cards);
 }
 
 const effectLabels: Record<EventEffect, string> = {
@@ -48,8 +44,10 @@ function worldDetails(event: WorldEvent): HTMLElement {
       ? `Доверие · ${peopleLabels[event.person]}` : effectLabels[effect];
     return [el('span', value > 0 ? 'gain' : 'loss', `${label} ${signed.format(value)}`)];
   });
+  const context = event.id.startsWith('rain') && event.country ? el('p', 'helper',
+    `Осадки в стране — в среднем ${yearlyPrecipitation[event.country]} мм в год по данным Всемирного банка.`) : null;
   return el('div', 'world-details', el('p', 'helper', story),
-    ...(changes.length ? [el('div', 'effects', ...changes)] : []));
+    ...(changes.length ? [el('div', 'effects', ...changes)] : []), ...(context ? [context] : []));
 }
 
 export function chronicle(life: LifeSnapshot, limit: number, more: () => void): HTMLElement {
@@ -74,7 +72,7 @@ export function indicatorPanel(title: string, category: string, ...content: Node
 }
 
 function development(life: LifeSnapshot): HTMLElement[] {
-  const { skills, interests, character, appearance } = life.development;
+  const { skills, character, appearance } = life.development;
   const skillMeters = Object.entries(skillLabels).map(([key, label]) =>
     metric(label, skills[key as keyof typeof skills]));
   return [
@@ -82,7 +80,6 @@ function development(life: LifeSnapshot): HTMLElement[] {
     indicatorPanel('Характер и внешность', 'character',
       metric('Дисциплина', character.discipline), metric('Открытость', character.openness),
       metric('Привлекательность', appearance)),
-    indicatorPanel('Интересы', 'interests', ...plans.map((id) => metric(planLabels[id], interests[id]))),
   ];
 }
 
@@ -91,7 +88,8 @@ interface PlayHandlers {
   preview: (option: ActionOption | null) => void;
   home: () => void;
   diary: () => void;
-  social: () => void;
+  auto: boolean;
+  toggleAuto: () => void;
   more: () => void;
 }
 
@@ -176,6 +174,9 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
         () => handlers.commit(advanceMonth(life)), 'month'),
       choiceCard('Прожить год', 'До 12 месяцев. Важный выбор или смерть остановят ход раньше.',
         () => handlers.commit(advanceYear(life)), 'year', true)));
+    section.append(button(handlers.auto ? 'Остановить автоход' : 'Включить автоход',
+      handlers.toggleAuto, handlers.auto ? 'primary' : 'quiet', 'autoplay'),
+      el('p', 'helper', 'Автоход проживает месяцы за вас и останавливается у важных решений.'));
     if (life.ageInMonths < 48) {
       section.append(el('p', 'helper', 'В раннем детстве события попадают в хронику. Первое решение появится в четыре года.'));
     } else {
@@ -184,15 +185,27 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
   } else if (status.type === 'decision') {
     section.classList.add('decision');
     section.prepend(el('p', 'pause-label', 'Время на паузе'));
-    if (status.decision === 'school-crisis') section.append(el('p', '', eventLabel(life.chronicle.at(-1)!)));
+    if (status.decision === 'school-crisis') {
+      const event = life.chronicle.slice(-8).reverse().find(({ type }) => type === 'crisis');
+      if (event) section.append(el('p', '', eventLabel(event)));
+    }
+    if (status.decision === 'family-loss') {
+      const losses = life.chronicle.filter((event) => event.type === 'parent-death' && event.ageInMonths === life.ageInMonths);
+      section.append(el('p', '', losses.map(eventLabel).join('. ') + '.'));
+    }
     section.append(el('p', 'helper', decisionContext[status.decision]));
   }
 
-  const first = availableChildhoodChoices(life).map((id) => choiceCard(childhoodLabels[id], childhoodEffects[id],
+  const first = availableChildhoodChoices(life).map((id) => choiceCard(id === 'read-with-caregiver' ? `Почитать вместе · ${familySupport(life)}` : childhoodLabels[id], childhoodEffects[id],
     () => handlers.commit(resolveChildhoodChoice(life, id)), id));
   const crisis = availableCrisisChoices(life).map(({ id, label }) => choiceCard(label, crisisEffects[id],
     () => handlers.commit(resolveCrisisChoice(life, id)), id));
-  if (first.length || crisis.length) section.append(el('div', 'choice-grid', ...first, ...crisis));
+  const grief = status.type === 'decision' && status.decision === 'family-loss'
+    ? griefChoices.map((id) => choiceCard(id === 'support' ? 'Обратиться за поддержкой' : 'Вспомнить хорошее',
+      id === 'support' ? 'Разговор с близкими поможет справиться с потерей.' : 'Герой вспомнит моменты, проведённые вместе.',
+      () => handlers.commit(resolveGrief(life, id)), `grief-${id}`))
+    : [];
+  if (first.length || crisis.length || grief.length) section.append(el('div', 'choice-grid', ...first, ...crisis, ...grief));
   if (options.length) {
     if (ongoing) section.append(el('h3', '', 'Что можно сделать сейчас'));
     section.append(el('p', 'helper', 'Откройте вариант, чтобы увидеть условия и подтвердить действие.'));
@@ -214,7 +227,6 @@ export function play(
     heading(life.birth.name),
     el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`)),
   el('div', 'profile-actions', button('Дневник', handlers.diary, 'quiet', 'open-diary'),
-    button('Круг общения', handlers.social, 'quiet', 'open-social'),
     button('Меню', handlers.home, 'quiet', 'menu')));
   const { family, startingHealth } = life.birth;
   const caregivers = {
@@ -223,11 +235,12 @@ export function play(
   const householdMeans = { limited: 'Ограниченный', moderate: 'Средний', high: 'Высокий' };
   const data = facts([
     ['Страна рождения', demographics.countries[life.birth.countryOfBirth].name],
-    ['Достаток', `${life.development.funds} ед.`],
+    ['Достаток', `${wealthLabel(life.development.funds)} · ${life.development.funds} ед.`],
     ['Образование', educationLabels[life.development.education]],
     ['Занятость', employmentLabels[life.development.employment]],
   ]);
   const birth = el('details', '', el('summary', '', 'Условия при рождении'), facts([
+    ['Людей в доме при рождении', family.olderSiblings + (family.caregivers === 'two-parents' ? 3 : 2)],
     ['Семья', caregivers[family.caregivers]],
     ['Старшие братья и сёстры', family.olderSiblings],
     ['Достаток семьи', householdMeans[family.means]],
@@ -235,8 +248,9 @@ export function play(
   ]));
   const wellbeing = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
     metric('Настроение', life.wellbeing.mood));
-  const indicators = el('aside', 'indicators',
-    wellbeing, relations(life), ...development(life), indicatorPanel('О герое', 'profile', data, birth));
+  const indicators = el('aside', 'indicators', el('div', 'indicator-grid',
+    wellbeing, ...development(life), indicatorPanel('О герое', 'profile', data, birth)),
+    socialCircle(life));
   indicators.setAttribute('aria-label', 'Показатели героя');
   const recent = life.chronicle.slice(-12).reverse().find((event) => event.type === 'world');
   const spotlight = recent?.type === 'world' && life.ageInMonths - recent.ageInMonths <= 2
@@ -244,13 +258,15 @@ export function play(
       el('h2', '', eventLabel(recent)), worldDetails(recent))]
     : [];
   const turn = controls(life, selected, handlers);
-  const content = life.status.type === 'active' && !selected ? [...spotlight, turn] : [turn, ...spotlight];
-  const workspace = el('section', 'workspace stack', ...content, chronicle(life, limit, handlers.more));
-  workspace.setAttribute('aria-label', 'Ходы и хроника');
+  const workspace = el('section', 'workspace stack', turn);
+  workspace.setAttribute('aria-label', 'Управление жизнью');
   workspace.tabIndex = 0;
-  const grid = el('div', 'dashboard-grid', workspace, indicators);
+  const timeline = el('section', 'timeline stack', ...spotlight, chronicle(life, limit, handlers.more));
+  timeline.setAttribute('aria-label', 'Журнал жизни');
+  timeline.tabIndex = 0;
+  const grid = el('div', 'dashboard-grid', workspace, timeline, indicators);
   const gameTab = button('Ходы и хроника', () => showIndicators(false), 'quiet');
-  const statsTab = button('Показатели', () => showIndicators(true), 'quiet');
+  const statsTab = button('Показатели', () => showIndicators(true), 'quiet', 'stats-tab');
   function showIndicators(show: boolean): void {
     grid.classList.toggle('show-indicators', show);
     gameTab.setAttribute('aria-pressed', String(!show));

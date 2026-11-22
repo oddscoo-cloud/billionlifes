@@ -1,9 +1,9 @@
 import { addDiaryEntry } from './sim/diary';
-import { diary, socialCircle } from './ui/journal';
+import { diary } from './ui/journal';
 import { createLife } from './sim/birth';
 import type { ActionOption } from './sim/actions';
 import type { LifeSnapshot } from './sim/life';
-import { startLife } from './sim/life';
+import { advanceAuto, startLife } from './sim/life';
 import { InvalidSaveError } from './storage/schema';
 import { openSaves, SaveConflictError } from './storage/saves';
 import { LifeSession } from './storage/session';
@@ -55,14 +55,39 @@ async function initialize(): Promise<void> {
 }
 
 function mount(session: LifeSession): void {
-  let screen: 'home' | 'birth' | 'play' | 'diary' | 'social' = 'home';
+  let screen: 'home' | 'birth' | 'play' | 'diary' = 'home';
   let selected: ActionOption | null = null;
   let previewButton = '';
   let limit = 50;
   let busy = false;
+  let autoplay = false;
+  let timer: number | undefined;
+
+  function stopAutoplay(): void {
+    autoplay = false;
+    window.clearTimeout(timer);
+  }
+
+  function scheduleAutoplay(): void {
+    if (!autoplay) return;
+    timer = window.setTimeout(() => {
+      const life = session.current?.life;
+      if (autoplay && screen === 'play' && life?.status.type === 'active') {
+        void commit(advanceAuto(life), 'play', true);
+      }
+    }, 650);
+  }
+
+  function toggleAutoplay(): void {
+    if (busy || session.current?.life.status.type !== 'active') return;
+    if (autoplay) stopAutoplay();
+    else { autoplay = true; scheduleAutoplay(); }
+    render('autoplay');
+  }
 
   function setScreen(next: typeof screen, focus = 'screen-title'): void {
     if (busy) return;
+    stopAutoplay();
     screen = next;
     selected = null;
     limit = 50;
@@ -72,13 +97,15 @@ function mount(session: LifeSession): void {
 
   function preview(option: ActionOption | null): void {
     if (busy) return;
+    stopAutoplay();
     if (option) previewButton = document.activeElement?.id ?? '';
     selected = option;
     render(option ? 'action-preview' : previewButton);
   }
 
-  async function commit(next: LifeSnapshot, destination: 'play' | 'diary' = 'play'): Promise<void> {
+  async function commit(next: LifeSnapshot, destination: 'play' | 'diary' = 'play', automatic = false): Promise<void> {
     if (busy) return;
+    if (!automatic) stopAutoplay();
     const previous = session.current?.life;
     if (next === previous) return;
     const previousFocus = document.activeElement?.id ?? '';
@@ -90,14 +117,19 @@ function mount(session: LifeSession): void {
       await session.commit(next);
       selected = null;
       screen = destination;
+      if (next.status.type !== 'active') stopAutoplay();
       const result = el('p', 'turn-result', destination === 'diary' ? 'Запись добавлена в дневник.' : turnFeedback(previous, next));
       notice.replaceChildren(result);
       notice.classList.add('result');
       const focus = destination === 'diary' ? 'diary-text' : next.status.type === 'decision' ? 'turn-title'
         : previous?.status.type === 'active' && next.status.type === 'active' ? previousFocus : '';
       app.inert = false;
-      render(focus === 'apply-plan' ? 'life-plan' : focus || 'screen-title');
+      render(focus === 'apply-plan' ? 'life-plan' : focus || (autoplay ? undefined : 'screen-title'), autoplay);
+      scheduleAutoplay();
     } catch (error) {
+      stopAutoplay();
+      const autoButton = document.getElementById('autoplay');
+      if (autoButton) autoButton.textContent = 'Включить автоход';
       if (error instanceof SaveConflictError) {
         const reload = button('Загрузить актуальную жизнь', () => location.reload(), 'quiet');
         notice.replaceChildren('Другая вкладка обновила сохранение. ', reload);
@@ -113,7 +145,7 @@ function mount(session: LifeSession): void {
     }
   }
 
-  function render(focus?: string): void {
+  function render(focus?: string, quiet = false): void {
     const life = session.current?.life ?? null;
     if (screen === 'birth') {
       app.replaceChildren(birthScreen(life, () => setScreen('home'), (name, sex) => {
@@ -123,21 +155,25 @@ function mount(session: LifeSession): void {
     } else if (screen === 'diary' && life) {
       app.replaceChildren(diary(life, () => setScreen('play', 'open-diary'),
         (text) => void commit(addDiaryEntry(life, text), 'diary')));
-    } else if (screen === 'social' && life) {
-      app.replaceChildren(socialCircle(life, () => setScreen('play', 'open-social')));
     } else if (screen === 'play' && life) {
+      const stats = quiet && app.querySelector('.show-indicators') !== null;
+      const panels = ['.workspace', '.timeline', '.indicators'];
+      const scroll = quiet ? panels.map((selector) => app.querySelector(selector)?.scrollTop ?? 0) : [];
+      const expanded = quiet && app.querySelector('.social-details[open]') !== null;
       const home = () => setScreen('home');
       const more = () => { limit += 50; render('older-events'); };
       const openDiary = () => setScreen('diary');
-      const openSocial = () => setScreen('social');
-      app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, { home, more, openDiary, openSocial })
+      app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, { home, more, openDiary })
         : play(life, selected, limit, {
-          commit: (next) => void commit(next), preview, home, more, diary: openDiary, social: openSocial,
+          commit: (next) => void commit(next), preview, home, more, diary: openDiary, auto: autoplay, toggleAuto: toggleAutoplay,
         }));
+      if (stats) app.querySelector<HTMLButtonElement>('#stats-tab')?.click();
+      if (expanded) app.querySelector('.social-details')?.setAttribute('open', '');
+      for (const [index, top] of scroll.entries()) app.querySelector(panels[index]!)?.scrollTo(0, top);
     } else {
       app.replaceChildren(startScreen(life, () => setScreen('play'), () => setScreen('birth', 'birth-name')));
     }
-    if (focus) (document.getElementById(focus) ?? document.getElementById('screen-title'))?.focus();
+    if (focus) (document.getElementById(focus) ?? document.getElementById('screen-title'))?.focus({ preventScroll: quiet });
   }
 
   render();
