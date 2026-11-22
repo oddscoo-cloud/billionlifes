@@ -106,12 +106,6 @@ export function characterPanel(life: LifeSnapshot): HTMLElement {
     : el('p', 'helper', 'Черты проявятся через трудные решения и повторяющийся жизненный опыт.'));
 }
 
-export function innerVoicePanel(life: LifeSnapshot): HTMLElement {
-  const voice = innerVoice(life);
-  return indicatorPanel('Внутри героя', 'voice',
-    el('p', 'voice-line', `«${voice.desire}»`));
-}
-
 interface PlayHandlers {
   commit: (life: LifeSnapshot) => void;
   preview: (option: ActionOption | null) => void;
@@ -310,9 +304,11 @@ function wellbeingPanel(life: LifeSnapshot, commit: PlayHandlers['commit']): HTM
 export function play(
   life: LifeSnapshot, selected: ActionOption | null, limit: number, handlers: PlayHandlers,
 ): HTMLElement {
+  const voice = innerVoice(life);
   const profile = el('section', 'profile', el('div', '',
     heading(life.birth.name),
-    el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`)),
+    el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`),
+    el('p', 'voice-line', `Желание: «${voice.desire}»`)),
   el('div', 'profile-actions', button('Дневник', handlers.diary, 'quiet', 'open-diary'),
     button('Меню', handlers.home, 'quiet', 'menu')));
   const { family, startingHealth } = life.birth;
@@ -335,7 +331,7 @@ export function play(
   ]));
   const wellbeing = wellbeingPanel(life, handlers.commit);
   const indicators = el('aside', 'indicators', el('div', 'indicator-grid',
-    wellbeing, ...development(life), innerVoicePanel(life),
+    wellbeing, ...development(life),
     indicatorPanel('О герое', 'profile', data, metric('Привлекательность', life.development.appearance), birth)),
     socialCircle(life, handlers.commit));
   indicators.setAttribute('aria-label', 'Показатели героя');

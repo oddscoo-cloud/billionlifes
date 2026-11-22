@@ -63,3 +63,21 @@ it('turns accumulated loss into a mental health pause and offers a recovery path
   expect(supported.wellbeing.mentalHealth).toMatchObject({ condition: 'recovering', supported: true });
   expect(supported.chronicle.at(-1)).toMatchObject({ type: 'crisis' });
 });
+
+it('can worsen an unsupported anxious state into depression', () => {
+  const life = startLife(createLife({ name: 'Олег', sex: 'male', seed: 12 }));
+  const stressed: LifeSnapshot = {
+    ...life,
+    ageInMonths: 240,
+    chronicle: [
+      ...life.chronicle,
+      { type: 'parent-death', role: 'father', ageInMonths: 230 },
+      { type: 'crisis', ageInMonths: 235, message: 'Стало трудно справляться.' },
+    ],
+  };
+  const anxious = advanceWellbeing(stressed);
+  const untreated = resolveCrisisChoice(anxious, 'continue-as-usual');
+  const monthLater = advanceWellbeing({ ...untreated, ageInMonths: 241 });
+  const depressed = advanceWellbeing({ ...monthLater, ageInMonths: 242 });
+  expect(depressed.wellbeing.mentalHealth?.condition).toBe('depression');
+});
