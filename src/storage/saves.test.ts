@@ -112,3 +112,27 @@ it('round-trips a final snapshot without allowing any further time advancement',
   expect(advanceMonth(loaded)).toBe(loaded);
   store.close();
 });
+
+it('opens a version-one snapshot with an empty diary and commits world events and notes in version two', async () => {
+  const factory = new IDBFactory();
+  const store = await openSaves(factory);
+  const { diary: _diary, ...oldLife } = newborn();
+  await new Promise<void>((resolve, reject) => {
+    const request = factory.open('billionlifes', 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const tx = db.transaction('lives', 'readwrite');
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onabort = () => { db.close(); reject(tx.error); };
+      tx.objectStore('lives').put({ schemaVersion: 1, revision: 9, life: oldLife }, 'current');
+    };
+  });
+  const restored = await store.read();
+  expect(restored).toEqual({ schemaVersion: 2, revision: 9, life: newborn() });
+  const life = advanceMonth(restored!.life);
+  const noted = { ...life, diary: [{ ageInMonths: life.ageInMonths, text: 'Первый месяц.' }] };
+  expect(await store.write(noted, 9)).toEqual({ schemaVersion: 2, revision: 10, life: noted });
+  expect((await store.read())?.life).toEqual(noted);
+  store.close();
+});

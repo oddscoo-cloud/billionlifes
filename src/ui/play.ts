@@ -1,3 +1,6 @@
+import { eventEffects, worldEvents } from '../data/world-events';
+import type { EventEffect } from '../data/world-events';
+import type { WorldEvent } from '../sim/world';
 import { demographics } from '../data/demographics';
 import { availableActions, resolveAction } from '../sim/actions';
 import type { ActionOption } from '../sim/actions';
@@ -30,11 +33,32 @@ export function relations(life: LifeSnapshot): HTMLElement {
   return indicatorPanel('Близкие', 'people', ...cards);
 }
 
+const effectLabels: Record<EventEffect, string> = {
+  mood: 'Настроение', funds: 'Достаток', academics: 'Учёба',
+  creativity: 'Творчество', communication: 'Общение', trust: 'Доверие',
+};
+const signed = new Intl.NumberFormat('ru', { signDisplay: 'always' });
+
+function worldDetails(event: WorldEvent): HTMLElement {
+  const [, story] = worldEvents[event.id];
+  const changes = eventEffects.flatMap((effect) => {
+    const value = event.effects[effect];
+    if (!value) return [];
+    const label = effect === 'trust' && event.person
+      ? `Доверие · ${peopleLabels[event.person]}` : effectLabels[effect];
+    return [el('span', value > 0 ? 'gain' : 'loss', `${label} ${signed.format(value)}`)];
+  });
+  return el('div', 'world-details', el('p', 'helper', story),
+    ...(changes.length ? [el('div', 'effects', ...changes)] : []));
+}
+
 export function chronicle(life: LifeSnapshot, limit: number, more: () => void): HTMLElement {
   const items = el('ol', 'chronicle');
   for (const event of life.chronicle.slice(-limit).reverse()) {
-    items.append(el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)),
-      el('span', '', eventLabel(event))));
+    const content = event.type === 'world'
+      ? el('details', 'world-entry', el('summary', '', eventLabel(event)), worldDetails(event))
+      : el('span', '', eventLabel(event));
+    items.append(el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), content));
   }
   const section = panel('Хроника', items);
   if (life.chronicle.length > limit) {
@@ -66,6 +90,8 @@ interface PlayHandlers {
   commit: (life: LifeSnapshot) => void;
   preview: (option: ActionOption | null) => void;
   home: () => void;
+  diary: () => void;
+  social: () => void;
   more: () => void;
 }
 
@@ -187,7 +213,9 @@ export function play(
   const profile = el('section', 'profile', el('div', '',
     heading(life.birth.name),
     el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`)),
-  button('Меню', handlers.home, 'quiet', 'menu'));
+  el('div', 'profile-actions', button('Дневник', handlers.diary, 'quiet', 'open-diary'),
+    button('Круг общения', handlers.social, 'quiet', 'open-social'),
+    button('Меню', handlers.home, 'quiet', 'menu')));
   const { family, startingHealth } = life.birth;
   const caregivers = {
     'two-parents': 'Двое родителей', 'one-parent': 'Один родитель', 'other-guardians': 'Другие опекуны',
@@ -210,8 +238,14 @@ export function play(
   const indicators = el('aside', 'indicators',
     wellbeing, relations(life), ...development(life), indicatorPanel('О герое', 'profile', data, birth));
   indicators.setAttribute('aria-label', 'Показатели героя');
-  const workspace = el('section', 'workspace stack',
-    controls(life, selected, handlers), chronicle(life, limit, handlers.more));
+  const recent = life.chronicle.slice(-12).reverse().find((event) => event.type === 'world');
+  const spotlight = recent?.type === 'world' && life.ageInMonths - recent.ageInMonths <= 2
+    ? [el('section', 'panel world-spotlight', el('p', 'world-kicker', `Вокруг героя · ${ageLabel(recent.ageInMonths)}`),
+      el('h2', '', eventLabel(recent)), worldDetails(recent))]
+    : [];
+  const turn = controls(life, selected, handlers);
+  const content = life.status.type === 'active' && !selected ? [...spotlight, turn] : [turn, ...spotlight];
+  const workspace = el('section', 'workspace stack', ...content, chronicle(life, limit, handlers.more));
   workspace.setAttribute('aria-label', 'Ходы и хроника');
   workspace.tabIndex = 0;
   const grid = el('div', 'dashboard-grid', workspace, indicators);

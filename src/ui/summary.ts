@@ -17,15 +17,25 @@ function countriesLivedIn(life: LifeSnapshot): readonly string[] {
 }
 
 function keyEvent(event: LifeEvent): boolean {
-  return event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
+  return (event.type === 'world' && ['library-return', 'move-welcome', 'shift-cover', 'new-colleague'].includes(event.id))
+    || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
     || event.type === 'childhood-choice' || (event.type === 'action' && event.succeeded);
 }
 
-export function summary(life: LifeSnapshot, limit: number, home: () => void, more: () => void): HTMLElement {
+interface SummaryNavigation {
+  home: () => void;
+  more: () => void;
+  openDiary: () => void;
+  openSocial: () => void;
+}
+
+export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNavigation): HTMLElement {
   const profile = el('section', 'profile', el('div', '',
     el('div', 'eyebrow', 'Итог жизни'), heading(life.birth.name),
     el('p', 'location', ageLabel(life.ageInMonths))),
-  button('Меню', home, 'quiet', 'menu'));
+  el('div', 'profile-actions', button('Дневник', navigation.openDiary, 'quiet', 'open-diary'),
+    button('Круг общения', navigation.openSocial, 'quiet', 'open-social'),
+    button('Меню', navigation.home, 'quiet', 'menu')));
   const overview = panel('Прожитая жизнь', facts([
     ['Возраст', ageLabel(life.ageInMonths)],
     ['Страны проживания', countriesLivedIn(life).join(', ')],
@@ -38,6 +48,6 @@ export function summary(life: LifeSnapshot, limit: number, home: () => void, mor
   const milestones = panel('Ключевые события', el('ol', 'chronicle', ...events.map((event) =>
     el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), el('span', '', eventLabel(event))))));
   return el('div', '', profile, el('div', 'grid',
-    el('div', 'stack', overview, milestones, chronicle(life, limit, more)),
+    el('div', 'stack', overview, milestones, chronicle(life, limit, navigation.more)),
     el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), relations(life))));
 }

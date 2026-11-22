@@ -1,3 +1,5 @@
+import { addDiaryEntry } from './sim/diary';
+import { diary, socialCircle } from './ui/journal';
 import { createLife } from './sim/birth';
 import type { ActionOption } from './sim/actions';
 import type { LifeSnapshot } from './sim/life';
@@ -53,7 +55,7 @@ async function initialize(): Promise<void> {
 }
 
 function mount(session: LifeSession): void {
-  let screen: 'home' | 'birth' | 'play' = 'home';
+  let screen: 'home' | 'birth' | 'play' | 'diary' | 'social' = 'home';
   let selected: ActionOption | null = null;
   let previewButton = '';
   let limit = 50;
@@ -75,9 +77,10 @@ function mount(session: LifeSession): void {
     render(option ? 'action-preview' : previewButton);
   }
 
-  async function commit(next: LifeSnapshot): Promise<void> {
+  async function commit(next: LifeSnapshot, destination: 'play' | 'diary' = 'play'): Promise<void> {
     if (busy) return;
     const previous = session.current?.life;
+    if (next === previous) return;
     const previousFocus = document.activeElement?.id ?? '';
     busy = true;
     app.inert = true;
@@ -86,11 +89,11 @@ function mount(session: LifeSession): void {
     try {
       await session.commit(next);
       selected = null;
-      screen = 'play';
-      const result = el('p', 'turn-result', turnFeedback(previous, next));
+      screen = destination;
+      const result = el('p', 'turn-result', destination === 'diary' ? 'Запись добавлена в дневник.' : turnFeedback(previous, next));
       notice.replaceChildren(result);
       notice.classList.add('result');
-      const focus = next.status.type === 'decision' ? 'turn-title'
+      const focus = destination === 'diary' ? 'diary-text' : next.status.type === 'decision' ? 'turn-title'
         : previous?.status.type === 'active' && next.status.type === 'active' ? previousFocus : '';
       app.inert = false;
       render(focus === 'apply-plan' ? 'life-plan' : focus || 'screen-title');
@@ -100,7 +103,7 @@ function mount(session: LifeSession): void {
         notice.replaceChildren('Другая вкладка обновила сохранение. ', reload);
         reload.focus();
       } else {
-        const retry = button('Повторить запись', () => void commit(next), 'quiet');
+        const retry = button('Повторить запись', () => void commit(next, destination), 'quiet');
         notice.replaceChildren('Не удалось сохранить ход. Текущая жизнь сохранена в прежнем состоянии. ', retry);
         retry.focus();
       }
@@ -117,11 +120,20 @@ function mount(session: LifeSession): void {
         const seed = crypto.getRandomValues(new Uint32Array(1))[0]!;
         void commit(startLife(createLife({ name, sex, seed })));
       }));
+    } else if (screen === 'diary' && life) {
+      app.replaceChildren(diary(life, () => setScreen('play', 'open-diary'),
+        (text) => void commit(addDiaryEntry(life, text), 'diary')));
+    } else if (screen === 'social' && life) {
+      app.replaceChildren(socialCircle(life, () => setScreen('play', 'open-social')));
     } else if (screen === 'play' && life) {
       const home = () => setScreen('home');
       const more = () => { limit += 50; render('older-events'); };
-      app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, home, more)
-        : play(life, selected, limit, { commit: (next) => void commit(next), preview, home, more }));
+      const openDiary = () => setScreen('diary');
+      const openSocial = () => setScreen('social');
+      app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, { home, more, openDiary, openSocial })
+        : play(life, selected, limit, {
+          commit: (next) => void commit(next), preview, home, more, diary: openDiary, social: openSocial,
+        }));
     } else {
       app.replaceChildren(startScreen(life, () => setScreen('play'), () => setScreen('birth', 'birth-name')));
     }
