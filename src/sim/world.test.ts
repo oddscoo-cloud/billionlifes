@@ -10,13 +10,13 @@ import type { WorldEvent } from './world';
 const newborn = () => startLife(createLife({ name: 'Мира', sex: 'female', seed: 43 }));
 const lastWorld = (life: LifeSnapshot) => life.chronicle.at(-1) as WorldEvent;
 
-it('adds everyday events every two to three months with deterministic month and year turns', () => {
+it('adds everyday events in most months with deterministic month and year turns', () => {
   const life = newborn();
   let monthly = life;
   for (let month = 0; month < 12; month += 1) monthly = advanceMonth(monthly);
   expect(advanceYear(life)).toEqual(monthly);
   const events = monthly.chronicle.filter((event): event is WorldEvent => event.type === 'world');
-  expect(events.length).toBeGreaterThanOrEqual(4);
+  expect(events.length).toBeGreaterThanOrEqual(7);
   expect(new Set(events.map(({ ageInMonths }) => ageInMonths)).size).toBe(events.length);
   expect(new Set(events.map(({ id }) => id)).size).toBeGreaterThanOrEqual(3);
 });

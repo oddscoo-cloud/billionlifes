@@ -54,6 +54,8 @@ const pastChoices: Record<Exclude<Memory['kind'], 'world'>, string> = {
   'shared-play': 'Познакомились за игрой',
   club: 'Записались в кружок',
   volunteering: 'Вместе помогали местному сообществу',
+  'shared-hardship': 'Поддержали друг друга в трудный момент',
+  'took-distance': 'После ссоры некоторое время общались реже',
   'asked-for-help': 'Поговорили о трудностях в группе',
 };
 

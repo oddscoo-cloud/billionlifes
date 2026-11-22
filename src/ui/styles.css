@@ -237,3 +237,9 @@ textarea {
 }
 
 .autoplay-settings { display: flex; flex-wrap: wrap; align-items: end; gap: .55rem; }
+
+.trait-list { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.trait-list li + li { border-top: 1px solid var(--line); padding-top: .45rem; }
+.trait-list strong { display: block; color: var(--category); font-size: .875rem; }
+.turning-entry { display: grid; }
+.turning-entry-label { color: #e7bc80; font-size: .85rem; }

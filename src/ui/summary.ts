@@ -4,7 +4,7 @@ import type { CountryCode } from '../data/demographics';
 import type { LifeEvent, LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import { ageLabel, educationLabels, employmentLabels, eventLabel, skillLabels } from './labels';
-import { chronicle, indicatorPanel, metric } from './play';
+import { characterPanel, chronicle, indicatorPanel, metric } from './play';
 
 function countriesLivedIn(life: LifeSnapshot): readonly string[] {
   const countries = new Set<CountryCode>([life.birth.countryOfBirth]);
@@ -19,7 +19,7 @@ function countriesLivedIn(life: LifeSnapshot): readonly string[] {
 
 function keyEvent(event: LifeEvent): boolean {
   return (event.type === 'world' && ['library-return', 'move-welcome', 'shift-cover', 'new-colleague'].includes(event.id))
-    || event.type === 'parent-death' || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
+    || event.type === 'turning-choice' || event.type === 'turning-consequence' || event.type === 'parent-death' || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
     || event.type === 'childhood-choice' || (event.type === 'action' && event.succeeded);
 }
 
@@ -48,5 +48,5 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
     el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), el('span', '', eventLabel(event))))));
   return el('div', '', profile, el('div', 'grid',
     el('div', 'stack', overview, milestones, chronicle(life, limit, navigation.more)),
-    el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), socialCircle(life))));
+    el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), characterPanel(life), socialCircle(life))));
 }

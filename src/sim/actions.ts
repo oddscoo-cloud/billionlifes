@@ -1,3 +1,4 @@
+import { characterTraits, traitLabels } from './traits';
 import { countryCodes, demographics } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
 import { grow } from './growth';
@@ -66,7 +67,7 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
   const { ageInMonths, status, development, countryOfResidence } = life;
   if (status.type === 'dead' || ageInMonths < 48) return [];
   if (status.type === 'decision') {
-    if (status.decision === 'first-childhood-activity' || status.decision === 'school-crisis' || status.decision === 'family-loss') return [];
+    if (status.decision === 'first-childhood-activity' || status.decision === 'school-crisis' || status.decision === 'family-loss' || status.decision === 'turning-point') return [];
     if (status.decision === 'teen-activity') return [option('school-club'), option('volunteer')];
     if (status.decision === 'later-life') {
       return development.employment === 'entry-level' || development.employment === 'specialist'
@@ -77,21 +78,26 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
 
   const options: ActionOption[] = [];
   if (ageInMonths >= 18 * 12) {
+    const stillJobSearching = life.chronicle.slice(-12).some((event) => event.type === 'turning-point'
+      && event.id === 'lost-job' && ageInMonths - event.ageInMonths < 2);
+    const traits = characterTraits(life);
+    const persistent = traits.some(({ id }) => id === 'persistent');
+    const open = traits.some(({ id }) => id === 'open');
     if (development.education !== 'higher' && ageInMonths >= development.nextAdmissionAge) {
       options.push(option('apply-university', [
         { label: 'Базовый шанс', contribution: 0.30 },
         { label: 'Подготовка', contribution: development.skills.academics * 0.005 },
-        { label: 'Дисциплина', contribution: (development.character.discipline - 50) * 0.004 },
+        ...(persistent ? [{ label: traitLabels.persistent, contribution: 0.08 }] : []),
       ]));
     }
     if (development.education === 'general') options.push(option('vocational-training'));
-    if (development.employment === 'unemployed') options.push(option('entry-level-job'));
-    if (development.education !== 'general'
+    if (!stillJobSearching && development.employment === 'unemployed') options.push(option('entry-level-job'));
+    if (!stillJobSearching && development.education !== 'general'
       && (development.employment === 'unemployed' || development.employment === 'entry-level')) {
       options.push(option('specialist-job', [
         { label: 'Квалификация', contribution: development.education === 'higher' ? 0.60 : 0.45 },
         { label: 'Общение', contribution: development.skills.communication * 0.003 },
-        { label: 'Открытость', contribution: (development.character.openness - 50) * 0.003 },
+        ...(open ? [{ label: traitLabels.open, contribution: 0.08 }] : []),
       ]));
     }
   }

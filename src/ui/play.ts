@@ -1,3 +1,5 @@
+import { characterTraits, traitLabels } from '../sim/traits';
+import { resolveTurningPoint, turningPoints } from '../sim/turning-points';
 import { autoplayDelays } from './autoplay-delay';
 import type { AutoplayDelay } from './autoplay-delay';
 import { yearlyPrecipitation } from '../data/households';
@@ -57,7 +59,10 @@ export function chronicle(life: LifeSnapshot, limit: number, more: () => void): 
   for (const event of life.chronicle.slice(-limit).reverse()) {
     const content = event.type === 'world'
       ? el('details', 'world-entry', el('summary', '', eventLabel(event)), worldDetails(event))
-      : el('span', '', eventLabel(event));
+      : event.type === 'turning-point' || event.type === 'turning-consequence'
+        ? el('div', 'turning-entry', el('span', 'turning-entry-label', event.type === 'turning-point' ? 'Трудный выбор' : 'Последствие решения'),
+          el('span', '', eventLabel(event)))
+        : el('span', '', eventLabel(event));
     items.append(el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), content));
   }
   const section = panel('Хроника', items);
@@ -74,15 +79,21 @@ export function indicatorPanel(title: string, category: string, ...content: Node
 }
 
 function development(life: LifeSnapshot): HTMLElement[] {
-  const { skills, character, appearance } = life.development;
+  const { skills } = life.development;
   const skillMeters = Object.entries(skillLabels).map(([key, label]) =>
     metric(label, skills[key as keyof typeof skills]));
   return [
     indicatorPanel('Навыки', 'skills', ...skillMeters),
-    indicatorPanel('Характер и внешность', 'character',
-      metric('Дисциплина', character.discipline), metric('Открытость', character.openness),
-      metric('Привлекательность', appearance)),
+    characterPanel(life),
   ];
+}
+
+export function characterPanel(life: LifeSnapshot): HTMLElement {
+  const traits = characterTraits(life);
+  const list = el('ul', 'trait-list', ...traits.map(({ id, reason }) =>
+    el('li', '', el('strong', '', traitLabels[id]), el('p', 'helper', reason))));
+  return indicatorPanel('Характер', 'character', traits.length ? list
+    : el('p', 'helper', 'Черты проявятся через трудные решения и повторяющийся жизненный опыт.'));
 }
 
 interface PlayHandlers {
@@ -168,7 +179,8 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
   const { status } = life;
   const options = availableActions(life);
   const ongoing = status.type === 'active';
-  const section = panel(status.type === 'decision' ? decisionLabels[status.decision] : 'Продвинуть время');
+  const scene = status.type === 'decision' && status.decision === 'turning-point' ? turningPoints[status.id] : null;
+  const section = panel(scene?.title ?? (status.type === 'decision' ? decisionLabels[status.decision] : 'Продвинуть время'));
   const title = section.querySelector('h2')!;
   title.id = 'turn-title';
   title.tabIndex = -1;
@@ -209,7 +221,13 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
       const losses = life.chronicle.filter((event) => event.type === 'parent-death' && event.ageInMonths === life.ageInMonths);
       section.append(el('p', '', losses.map(eventLabel).join('. ') + '.'));
     }
-    section.append(el('p', 'helper', decisionContext[status.decision]));
+    if (scene) {
+      section.append(el('p', '', scene.story));
+      if (status.decision === 'turning-point' && status.id === 'lost-job') {
+        section.append(el('p', 'helper', 'Подать заявку на новую постоянную работу можно через два месяца.'));
+      }
+    }
+    else section.append(el('p', 'helper', decisionContext[status.decision]));
   }
 
   const first = availableChildhoodChoices(life).map((id) => choiceCard(id === 'read-with-caregiver' ? `Почитать вместе · ${familySupport(life)}` : childhoodLabels[id], childhoodEffects[id],
@@ -221,7 +239,12 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
       id === 'support' ? 'Разговор с близкими поможет справиться с потерей.' : 'Герой вспомнит моменты, проведённые вместе.',
       () => handlers.commit(resolveGrief(life, id)), `grief-${id}`))
     : [];
-  if (first.length || crisis.length || grief.length) section.append(el('div', 'choice-grid', ...first, ...crisis, ...grief));
+  const challenges = scene ? ([0, 1] as const).map((index) => {
+    const option = scene.responses[index];
+    return choiceCard(option.label, option.hint, () => handlers.commit(resolveTurningPoint(life, index)), `turning-${index}`);
+  }) : [];
+  const decisions = [...first, ...crisis, ...grief, ...challenges];
+  if (decisions.length) section.append(el('div', 'choice-grid', ...decisions));
   if (options.length) {
     if (ongoing) section.append(el('h3', '', 'Что можно сделать сейчас'));
     section.append(el('p', 'helper', 'Откройте вариант, чтобы увидеть условия и подтвердить действие.'));
@@ -265,7 +288,7 @@ export function play(
   const wellbeing = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
     metric('Настроение', life.wellbeing.mood));
   const indicators = el('aside', 'indicators', el('div', 'indicator-grid',
-    wellbeing, ...development(life), indicatorPanel('О герое', 'profile', data, birth)),
+    wellbeing, ...development(life), indicatorPanel('О герое', 'profile', data, metric('Привлекательность', life.development.appearance), birth)),
     socialCircle(life));
   indicators.setAttribute('aria-label', 'Показатели героя');
   const recent = life.chronicle.slice(-12).reverse().find((event) => event.type === 'world');

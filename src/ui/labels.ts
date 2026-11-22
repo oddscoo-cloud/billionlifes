@@ -1,3 +1,4 @@
+import { turningPoints } from '../sim/turning-points';
 import { demographics } from '../data/demographics';
 import { worldEvents } from '../data/world-events';
 import { activities } from '../sim/actions';
@@ -17,6 +18,7 @@ export const decisionLabels: Record<Extract<LifeStatus, { type: 'decision' }>['d
   'teen-activity': 'Занятие для подростка',
   'adult-path': 'Начало взрослой жизни',
   'later-life': 'Решение о жизни после 65',
+  'turning-point': 'Трудный выбор',
   'family-loss': 'Потеря родителя',
   'school-crisis': 'Трудности в учебной группе',
 };
@@ -43,6 +45,9 @@ export function ageLabel(months: number): string {
 
 export function eventLabel(event: LifeEvent): string {
   switch (event.type) {
+    case 'turning-point': return turningPoints[event.id].title;
+    case 'turning-choice': return turningPoints[event.id].responses[event.response].outcome;
+    case 'turning-consequence': return turningPoints[event.id].responses[event.response].followup;
     case 'parent-death': return event.role === 'mother' ? 'Мама умерла' : 'Папа умер';
     case 'family-response': return event.choice === 'support' ? 'Герой обратился за поддержкой' : 'Герой вспомнил хорошие моменты';
     case 'world': return worldEvents[event.id][0];

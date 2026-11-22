@@ -38,7 +38,6 @@ describe('development and actions', () => {
     );
     expect(monthly.development.skills.academics).toBe(active.development.skills.academics + 12 + extraStudy);
     expect(monthly.development.interests.study).toBe(active.development.interests.study + 12);
-    expect(monthly.development.character.discipline).toBe(active.development.character.discipline + 12);
 
     const care = resolveAction(reader, { id: 'personal-care' });
     expect(advanceMonth(care).development.appearance).toBe(reader.development.appearance + 1);
@@ -69,7 +68,6 @@ describe('development and actions', () => {
     const before = admission(start)!;
     const after = admission(prepared)!;
     expect(after.chance).toBeGreaterThan(before.chance);
-    expect(after.factors.find(({ label }) => label === 'Дисциплина')?.contribution).toBeGreaterThan(0);
 
     const randomState = randomStateFor(before.chance, after.chance);
     const failure = resolveAction({ ...start, randomState }, before.action);

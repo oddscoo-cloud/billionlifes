@@ -48,7 +48,7 @@ export function advanceParents(life: LifeSnapshot): LifeSnapshot {
     return lost;
   });
   if (!losses.length) return life;
-  const resume = life.status.type === 'decision' && life.status.decision !== 'family-loss'
+  const resume = life.status.type === 'decision' && life.status.decision !== 'family-loss' && life.status.decision !== 'turning-point'
     ? life.status.decision : undefined;
   return {
     ...life, parents: next,
