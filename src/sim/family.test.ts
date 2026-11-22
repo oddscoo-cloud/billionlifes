@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { createLife } from './birth';
 import { advanceParents, resolveGrief } from './family';
-import { advanceAuto, advanceMonth, advanceYear, startLife } from './life';
+import { advanceAuto, advanceEarlyChildhood, advanceMonth, advanceYear, startLife } from './life';
 import type { LifeSnapshot } from './life';
 
 const newborn = () => startLife(createLife({ name: 'Мира', sex: 'female', seed: 43 }));
@@ -26,6 +26,7 @@ it('pauses for parental death and restores a simultaneous birthday decision', ()
   const paused = advanceAuto(life);
   expect(paused).toEqual(advanceMonth(life));
   expect(advanceYear(life)).toEqual(paused);
+  expect(advanceEarlyChildhood(life)).toEqual(paused);
   expect(paused.parents[0]?.diedAt).toBe(48);
   expect(paused.status).toEqual({ type: 'decision', decision: 'family-loss', resume: 'first-childhood-activity' });
   expect(advanceAuto(paused)).toBe(paused);

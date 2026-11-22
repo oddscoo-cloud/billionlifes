@@ -5,7 +5,12 @@ import type { LifeSnapshot } from '../sim/life';
 import { ageLabel, decisionLabels, eventLabel, planLabels } from './labels';
 
 function elapsedLabel(months: number): string {
-  if (months === 12) return '1 год';
+  if (months >= 12) {
+    const years = Math.floor(months / 12);
+    const rest = months % 12;
+    const label = `${years} ${years === 1 ? 'год' : years < 5 ? 'года' : 'лет'}`;
+    return rest ? `${label} и ${elapsedLabel(rest)}` : label;
+  }
   if (months === 1) return '1 месяц';
   if (months >= 2 && months <= 4) return `${months} месяца`;
   return `${months} месяцев`;

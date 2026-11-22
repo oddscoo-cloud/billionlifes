@@ -20,7 +20,8 @@ import { availableCrisisChoices, resolveCrisisChoice } from '../sim/crisis';
 import { plans } from '../sim/growth';
 import type { Plan } from '../sim/growth';
 import {
-  advanceMonth, advanceYear, availableChildhoodChoices, resolveChildhoodChoice, setPlan,
+  advanceEarlyChildhood, advanceMonth, advanceYear, availableChildhoodChoices, firstChoiceAgeInMonths,
+  resolveChildhoodChoice, setPlan,
 } from '../sim/life';
 import type { LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
@@ -196,7 +197,11 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
       choiceCard('Прожить месяц', 'Один шаг вперёд. Удобно, если вы хотите менять план по ходу жизни.',
         () => handlers.commit(advanceMonth(life)), 'month'),
       choiceCard('Прожить год', 'До 12 месяцев. Важный выбор или смерть остановят ход раньше.',
-        () => handlers.commit(advanceYear(life)), 'year', true)));
+        () => handlers.commit(advanceYear(life)), 'year', true),
+      ...(life.ageInMonths < firstChoiceAgeInMonths ? [
+        choiceCard('До четырёх лет', 'Прожить раннее детство одним ходом. Игра остановится при важном событии или смерти.',
+          () => handlers.commit(advanceEarlyChildhood(life)), 'early-childhood'),
+      ] : [])));
     const delay = el('select');
     delay.id = 'autoplay-delay';
     delay.append(...autoplayDelays.map((seconds) => new Option(
@@ -212,7 +217,7 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
       button(handlers.auto ? 'Остановить автоход' : 'Включить автоход',
         handlers.toggleAuto, handlers.auto ? 'primary' : 'quiet', 'autoplay')),
       el('p', 'helper', 'Автоход проживает месяцы за вас и останавливается у важных решений.'));
-    if (life.ageInMonths < 48) {
+    if (life.ageInMonths < firstChoiceAgeInMonths) {
       section.append(el('p', 'helper', 'В раннем детстве события попадают в хронику. Первое решение появится в четыре года.'));
     } else {
       section.append(planControl(life, handlers.commit));
