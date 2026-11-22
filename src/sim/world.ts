@@ -28,6 +28,9 @@ type EventChoice = {
   readonly contact?: readonly [ClosePersonId, number];
 };
 
+const rareEventIds = ['unexpected-reunion', 'old-letter', 'small-kindness-remembered'] as const;
+const rareEventChance = 0.0015;
+
 const everyday: readonly EventChoice[] = [
   { id: 'market', mood: 1 }, { id: 'power-outage', mood: -2 },
   { id: 'evening-out', mood: 2 }, { id: 'unplanned-visit', mood: 2 }, { id: 'shared-ride', mood: 1 }, { id: 'quiet-routine', mood: 1 },
@@ -144,6 +147,17 @@ function candidates(life: LifeSnapshot): EventChoice[] {
   return pool;
 }
 
+function rareEvent(life: LifeSnapshot): EventChoice | undefined {
+  if (life.ageInMonths < 18 * 12
+    || life.chronicle.some((event) => event.type === 'world' && rareEventIds.includes(event.id as typeof rareEventIds[number]))) {
+    return undefined;
+  }
+  const friend = life.relationships.find(({ id }) => id === 'friend');
+  if (friend && life.ageInMonths % 3 === 0) return { id: 'unexpected-reunion', mood: 5, contact: ['friend', 8] };
+  if (life.parents.length && life.ageInMonths % 2 === 0) return { id: 'old-letter', mood: 4, contact: ['caregiver', 6] };
+  return { id: 'small-kindness-remembered', mood: 3, skills: { communication: 2 } };
+}
+
 function rainEvent(life: LifeSnapshot): EventChoice {
   if (life.development.plan === 'study') return { id: 'rain-study', mood: -1, skills: { academics: 1 } };
   if (employed(life)) return { id: 'rain-commute', mood: -4 };
@@ -178,13 +192,14 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   // Annual precipitation is a weighting proxy, not an observed probability of rainy days.
   const rainChance = yearlyPrecipitation[life.countryOfResidence] / 6500;
   const wet = ageInMonths >= 48 && value < rainChance ? rainEvent(life) : undefined;
+  const rare = !followup && value < rareEventChance ? rareEvent(life) : undefined;
   const draw = ageInMonths >= 48 && !wet ? (value - rainChance) / (1 - rainChance) : value;
   const blocked = new Set(recent.flatMap((event) => event.type === 'world' ? [event.id] : []));
   const eligible = candidates(life).filter(({ id }) => !blocked.has(id));
   const seenRecently = new Set(recentEvents(life, 10).flatMap((event) => event.type === 'world' ? [event.id] : []));
   const fresh = eligible.filter(({ id }) => !seenRecently.has(id));
   const pool = fresh.length ? fresh : eligible;
-  const event = followup ?? wet ?? pool[Math.floor(draw * pool.length)];
+  const event = followup ?? rare ?? wet ?? pool[Math.floor(draw * pool.length)];
   if (!event) return life;
 
   const variant = chooseVariant(life, event.id);

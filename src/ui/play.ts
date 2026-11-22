@@ -30,6 +30,7 @@ import {
   peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
+import { innerVoice } from '../sim/inner-voice';
 
 export function metric(label: string, value: number): HTMLElement {
   const meter = el('meter');
@@ -102,6 +103,13 @@ export function characterPanel(life: LifeSnapshot): HTMLElement {
     el('li', '', el('strong', '', traitLabels[id]), el('p', 'helper', reason))));
   return indicatorPanel('Характер', 'character', traits.length ? list
     : el('p', 'helper', 'Черты проявятся через трудные решения и повторяющийся жизненный опыт.'));
+}
+
+export function innerVoicePanel(life: LifeSnapshot): HTMLElement {
+  const voice = innerVoice(life);
+  return indicatorPanel('Внутри героя', 'voice',
+    el('p', 'voice-line', `«${voice.desire}»`),
+    el('p', 'helper', `Тревожная мысль: ${voice.worry}`));
 }
 
 interface PlayHandlers {
@@ -324,7 +332,8 @@ export function play(
   ]));
   const wellbeing = wellbeingPanel(life, handlers.commit);
   const indicators = el('aside', 'indicators', el('div', 'indicator-grid',
-    wellbeing, ...development(life), indicatorPanel('О герое', 'profile', data, metric('Привлекательность', life.development.appearance), birth)),
+    wellbeing, ...development(life), innerVoicePanel(life),
+    indicatorPanel('О герое', 'profile', data, metric('Привлекательность', life.development.appearance), birth)),
     socialCircle(life, handlers.commit));
   indicators.setAttribute('aria-label', 'Показатели героя');
   indicators.tabIndex = -1;
