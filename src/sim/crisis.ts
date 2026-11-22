@@ -3,7 +3,7 @@ import type { LifeSnapshot } from './life';
 import { remember } from './relationships';
 
 export const crisisChoices = ['ask-for-help', 'wait', 'change-group'] as const;
-export const mentalHealthChoices = ['seek-care', 'ask-for-support', 'rest-and-routine'] as const;
+export const mentalHealthChoices = ['seek-care', 'ask-for-support', 'rest-and-routine', 'continue-as-usual'] as const;
 export type CrisisChoice = typeof crisisChoices[number] | typeof mentalHealthChoices[number];
 export type CrisisPhase = 'none' | 'strain' | 'withdrawn' | 'recovering' | 'resolved';
 export type MentalHealthCondition = 'none' | 'anxiety' | 'depression' | 'burnout' | 'recovering';
@@ -61,6 +61,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
       if (event.type === 'parent-death' || event.type === 'sibling-death') return score + 5;
       if (event.type === 'crisis') return score + (event.choice === 'ask-for-help' ? 0 : 2);
       if (event.type === 'turning-point') return score + (event.id === 'lost-job' ? 3 : 2);
+      if (event.type === 'turning-choice' || event.type === 'turning-consequence') return score + 1;
       if (event.type === 'romance' && event.step === 'end') return score + 3;
       if (event.type === 'world' && (event.effects.mood ?? 0) <= -3) return score + 1;
       return score;
@@ -88,7 +89,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
     };
     const stress = stressScore(life);
     const support = hasTrustedSupport(life);
-    if (current.condition === 'none' && stress >= 6 && !support) {
+    if (current.condition === 'none' && stress >= 4 && !support) {
       return mentalEvent({
         ...life,
         wellbeing: { ...life.wellbeing, mentalHealth: {
@@ -98,7 +99,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
         ? 'Сил стало заметно меньше, а привычные дела начали казаться непосильными. Это не просто плохой день — нужна поддержка.'
         : 'Тревога стала возвращаться чаще и мешать обычным делам. Пора отнестись к этому серьёзно.');
     }
-    if (current.condition === 'anxiety' && current.months >= 3 && stress >= 4 && !support) {
+    if (current.condition === 'anxiety' && current.months >= 2 && stress >= 3 && !support) {
       return mentalEvent({
         ...life,
         wellbeing: { ...life.wellbeing, mentalHealth: { ...current, condition: 'depression', severity: 2 } },
@@ -170,6 +171,7 @@ export function availableCrisisChoices(life: LifeSnapshot): readonly CrisisOptio
       { id: 'seek-care', label: 'Обратиться за профессиональной помощью' },
       { id: 'ask-for-support', label: 'Рассказать близкому человеку' },
       { id: 'rest-and-routine', label: 'Снизить нагрузку и восстановить режим' },
+      { id: 'continue-as-usual', label: 'Пока ничего не менять' },
     ];
   }
   if (life.status.decision !== 'school-crisis') return [];
@@ -189,11 +191,14 @@ export function resolveCrisisChoice(life: LifeSnapshot, choice: CrisisChoice): L
       ? { condition: 'recovering' as const, severity: Math.max(1, mental.severity - 1) as 0 | 1 | 2 | 3, months: 0, supported: true }
       : choice === 'ask-for-support'
         ? { ...mental, severity: Math.max(1, mental.severity - 1) as 0 | 1 | 2 | 3, months: 0, supported: true }
-        : { ...mental, severity: Math.max(1, mental.severity - 1) as 0 | 1 | 2 | 3, months: 0, supported: true };
+        : choice === 'rest-and-routine'
+          ? { condition: 'recovering' as const, severity: mental.severity, months: 0, supported: true }
+          : { ...mental, months: mental.months + 1, supported: false };
     const messages = {
       'seek-care': 'Герой обратился за профессиональной помощью. Сразу не стало легко, но появился план восстановления.',
       'ask-for-support': 'Герой рассказал близкому человеку, как ему на самом деле. Разговор не решил всё, но теперь не пришлось оставаться с этим одному.',
       'rest-and-routine': 'Герой отменил часть дел, восстановил сон и оставил в расписании только самое необходимое.',
+      'continue-as-usual': 'Герой решил продолжать как обычно. Внешне ничего не изменилось, но состояние осталось без поддержки.',
     } as const;
     return {
       ...life,
