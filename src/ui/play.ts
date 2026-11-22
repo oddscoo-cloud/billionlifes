@@ -27,7 +27,7 @@ export function metric(label: string, value: number): HTMLElement {
 export function relations(life: LifeSnapshot): HTMLElement {
   const cards = life.relationships.map((person) => el('article', 'person', portrait(person.id),
     el('div', '', el('h3', '', peopleLabels[person.id]), metric('Доверие', person.trust))));
-  return panel('Близкие', ...cards);
+  return indicatorPanel('Близкие', 'people', ...cards);
 }
 
 export function chronicle(life: LifeSnapshot, limit: number, more: () => void): HTMLElement {
@@ -43,15 +43,23 @@ export function chronicle(life: LifeSnapshot, limit: number, more: () => void): 
   return section;
 }
 
-function development(life: LifeSnapshot): HTMLElement {
+export function indicatorPanel(title: string, category: string, ...content: Node[]): HTMLElement {
+  const section = panel(title, ...content);
+  section.classList.add('indicator', `indicator-${category}`);
+  return section;
+}
+
+function development(life: LifeSnapshot): HTMLElement[] {
   const { skills, interests, character, appearance } = life.development;
   const skillMeters = Object.entries(skillLabels).map(([key, label]) =>
     metric(label, skills[key as keyof typeof skills]));
-  return panel('Развитие', el('h3', '', 'Навыки'), ...skillMeters,
-    el('h3', '', 'Характер и внешность'),
-    metric('Дисциплина', character.discipline), metric('Открытость', character.openness),
-    metric('Привлекательность', appearance),
-    el('details', '', el('summary', '', 'Интересы'), ...plans.map((id) => metric(planLabels[id], interests[id]))));
+  return [
+    indicatorPanel('Навыки', 'skills', ...skillMeters),
+    indicatorPanel('Характер и внешность', 'character',
+      metric('Дисциплина', character.discipline), metric('Открытость', character.openness),
+      metric('Привлекательность', appearance)),
+    indicatorPanel('Интересы', 'interests', ...plans.map((id) => metric(planLabels[id], interests[id]))),
+  ];
 }
 
 interface PlayHandlers {
@@ -177,7 +185,7 @@ export function play(
   life: LifeSnapshot, selected: ActionOption | null, limit: number, handlers: PlayHandlers,
 ): HTMLElement {
   const profile = el('section', 'profile', el('div', '',
-    el('div', 'eyebrow', 'Дневник жизни'), heading(life.birth.name),
+    heading(life.birth.name),
     el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`)),
   button('Меню', handlers.home, 'quiet', 'menu'));
   const { family, startingHealth } = life.birth;
@@ -197,9 +205,24 @@ export function play(
     ['Достаток семьи', householdMeans[family.means]],
     ['Здоровье', startingHealth === 'typical' ? 'Обычное' : 'Требовалась поддержка'],
   ]));
-  const wellbeing = panel('Самочувствие', el('p', '', phaseLabels[life.wellbeing.phase]),
+  const wellbeing = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
     metric('Настроение', life.wellbeing.mood));
-  return el('div', '', profile, el('div', 'grid',
-    el('div', 'stack', controls(life, selected, handlers), chronicle(life, limit, handlers.more)),
-    el('aside', 'stack', panel('О герое', data, birth), wellbeing, development(life), relations(life))));
+  const indicators = el('aside', 'indicators',
+    wellbeing, relations(life), ...development(life), indicatorPanel('О герое', 'profile', data, birth));
+  indicators.setAttribute('aria-label', 'Показатели героя');
+  const workspace = el('section', 'workspace stack',
+    controls(life, selected, handlers), chronicle(life, limit, handlers.more));
+  workspace.setAttribute('aria-label', 'Ходы и хроника');
+  workspace.tabIndex = 0;
+  const grid = el('div', 'dashboard-grid', workspace, indicators);
+  const gameTab = button('Ходы и хроника', () => showIndicators(false), 'quiet');
+  const statsTab = button('Показатели', () => showIndicators(true), 'quiet');
+  function showIndicators(show: boolean): void {
+    grid.classList.toggle('show-indicators', show);
+    gameTab.setAttribute('aria-pressed', String(!show));
+    statsTab.setAttribute('aria-pressed', String(show));
+  }
+  showIndicators(false);
+  const tabs = el('div', 'dashboard-tabs', gameTab, statsTab);
+  return el('div', 'dashboard', profile, el('div', 'dashboard-content', tabs, grid));
 }

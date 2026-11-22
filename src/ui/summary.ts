@@ -3,7 +3,7 @@ import type { CountryCode } from '../data/demographics';
 import type { LifeEvent, LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import { ageLabel, educationLabels, employmentLabels, eventLabel, skillLabels } from './labels';
-import { chronicle, metric, relations } from './play';
+import { chronicle, indicatorPanel, metric, relations } from './play';
 
 function countriesLivedIn(life: LifeSnapshot): readonly string[] {
   const countries = new Set<CountryCode>([life.birth.countryOfBirth]);
@@ -39,5 +39,5 @@ export function summary(life: LifeSnapshot, limit: number, home: () => void, mor
     el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), el('span', '', eventLabel(event))))));
   return el('div', '', profile, el('div', 'grid',
     el('div', 'stack', overview, milestones, chronicle(life, limit, more)),
-    el('aside', 'stack', panel('Навыки', ...skills), relations(life))));
+    el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), relations(life))));
 }
