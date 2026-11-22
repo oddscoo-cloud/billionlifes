@@ -56,7 +56,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
 
   function stressScore(life: LifeSnapshot): number {
     const cutoff = life.ageInMonths - 12;
-    return life.chronicle.reduce((score, event) => {
+    const raw = life.chronicle.reduce((score, event) => {
       if (event.ageInMonths < cutoff) return score;
       if (event.type === 'parent-death' || event.type === 'sibling-death') return score + 5;
       if (event.type === 'crisis') return score + (event.choice === 'ask-for-help' ? 0 : 2);
@@ -65,6 +65,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
       if (event.type === 'world' && (event.effects.mood ?? 0) <= -3) return score + 1;
       return score;
     }, 0);
+    return Math.max(0, raw - Math.floor(life.development.skills.resilience / 20));
   }
 
   function hasTrustedSupport(life: LifeSnapshot): boolean {
@@ -106,17 +107,25 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
     const months = current.months + 1;
     if (current.condition === 'none') return life;
     if ((current.condition === 'anxiety' || current.condition === 'depression') && stress >= 6
-      && life.development.employment !== 'unemployed' && months >= 2) {
+      && !support && life.development.employment !== 'unemployed' && months >= 2) {
       return mentalEvent({
         ...life,
         wellbeing: { ...life.wellbeing, mentalHealth: { ...current, condition: 'burnout', severity: Math.max(current.severity, 2) as 0 | 1 | 2 | 3, months } },
       }, 'Постоянное напряжение и нагрузка начали отнимать силы быстрее, чем они восстанавливались. Нужны изменения, а не ещё больше усилий.');
     }
-    if (current.condition === 'recovering' && support && stress <= 2 && months >= 4) {
+    const recoveryMonths = Math.max(4, 6 - Math.floor(life.development.skills.resilience / 50));
+    if (current.condition === 'recovering' && support && stress <= 2 && months >= recoveryMonths) {
       return {
         ...life,
         wellbeing: { ...life.wellbeing, mentalHealth: { condition: 'none', severity: 0, months: 0, supported: true } },
         chronicle: [...life.chronicle, { type: 'crisis', ageInMonths: life.ageInMonths, message: 'Постепенно стало легче просить о помощи и возвращаться к обычным делам.' }],
+      };
+    }
+    if (current.condition !== 'recovering' && current.supported && support && stress <= 2 && months >= recoveryMonths) {
+      return {
+        ...life,
+        wellbeing: { ...life.wellbeing, mentalHealth: { condition: 'none', severity: 0, months: 0, supported: true } },
+        chronicle: [...life.chronicle, { type: 'crisis', ageInMonths: life.ageInMonths, message: 'Поддержка стала частью жизни, а тяжёлый период постепенно остался позади.' }],
       };
     }
     return {
@@ -126,7 +135,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
   }
   const monthsInPhase = wellbeing.monthsInPhase + 1;
   if (wellbeing.phase === 'recovering') {
-    const recovered = monthsInPhase >= (wellbeing.support ? 3 : 5);
+    const recovered = monthsInPhase >= (wellbeing.support ? 4 : 6);
     return {
       ...life,
       wellbeing: {

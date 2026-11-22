@@ -58,7 +58,7 @@ function validBirth(birth: unknown): birth is BirthConditions {
 }
 
 function validDevelopment(value: unknown): boolean {
-  return object(value) && scores(value.skills, ['academics', 'creativity', 'communication'])
+  return object(value) && scores(value.skills, ['academics', 'creativity', 'communication', 'resilience', 'practical', 'empathy'])
     && scores(value.interests, plans)
     && integer(value.appearance, 0, 100) && validPlan(value.plan)
     && oneOf(value.education, ['general', 'vocational', 'higher'])
@@ -207,6 +207,20 @@ export function decodeSave(raw: unknown): SaveRecord {
     life = {
       ...life,
       wellbeing: { ...life.wellbeing, mentalHealth: { condition: 'none', severity: 0, months: 0, supported: false } },
+    };
+  }
+  if (object(life) && object(life.development) && object(life.development.skills)) {
+    life = {
+      ...life,
+      development: {
+        ...life.development,
+        skills: {
+          ...life.development.skills,
+          resilience: life.development.skills.resilience ?? 0,
+          practical: life.development.skills.practical ?? 0,
+          empathy: life.development.skills.empathy ?? 0,
+        },
+      },
     };
   }
   if (!integer(raw.revision, 1) || !validLife(life)) throw new InvalidSaveError('corrupt', raw);

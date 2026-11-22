@@ -41,7 +41,9 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
       const { skills, appearance } = next.development;
       const before = previous.development;
       if (appearance > before.appearance || skills.academics > before.skills.academics
-        || skills.creativity > before.skills.creativity || skills.communication > before.skills.communication) {
+        || skills.creativity > before.skills.creativity || skills.communication > before.skills.communication
+        || skills.resilience > before.skills.resilience || skills.practical > before.skills.practical
+        || skills.empathy > before.skills.empathy) {
         details.push(`есть прогресс по плану «${planLabels[next.development.plan]}»`);
       }
     }

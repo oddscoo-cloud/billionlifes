@@ -1,4 +1,6 @@
-export const eventEffects = ['mood', 'funds', 'academics', 'creativity', 'communication', 'trust'] as const;
+export const eventEffects = [
+  'mood', 'funds', 'academics', 'creativity', 'communication', 'resilience', 'practical', 'empathy', 'trust',
+] as const;
 export type EventEffect = (typeof eventEffects)[number];
 
 export const worldEvents = {
