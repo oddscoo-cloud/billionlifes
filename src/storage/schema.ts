@@ -3,9 +3,11 @@ import { activities, milestoneAt } from '../sim/actions';
 import { crisisChoices } from '../sim/crisis';
 import { plans } from '../sim/growth';
 import type { LifeSnapshot } from '../sim/life';
-import { closePersonIds } from '../sim/relationships';
+import { eventEffects, worldEvents } from '../data/world-events';
+import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
+import { closePersonIds, memoryKinds } from '../sim/relationships';
 
-export const schemaVersion = 1;
+export const schemaVersion = 2;
 
 export interface SaveRecord {
   readonly schemaVersion: typeof schemaVersion;
@@ -60,11 +62,27 @@ function validDevelopment(value: unknown): boolean {
 function validRelationships(value: unknown, age: number): boolean {
   return Array.isArray(value) && value.length >= 1 && value.length <= closePersonIds.length
     && value.every((entry: unknown) => object(entry) && oneOf(entry.id, closePersonIds)
-      && integer(entry.trust, 0, 100) && Array.isArray(entry.memories)
+      && integer(entry.trust, 0, 100) && (entry.country === undefined || oneOf(entry.country, countryCodes))
+      && Array.isArray(entry.memories)
       && entry.memories.every((memory: unknown) => object(memory) && integer(memory.ageInMonths, 0, age)
-        && oneOf(memory.kind, ['shared-reading', 'shared-play', 'club', 'volunteering', 'asked-for-help'])))
+        && (memory.kind === 'world' ? validWorldId(memory.event) : oneOf(memory.kind, memoryKinds))))
     && value.some((entry) => entry.id === 'caregiver')
     && new Set(value.map((entry) => entry.id)).size === value.length;
+}
+
+function validWorldId(id: unknown): boolean {
+  return typeof id === 'string' && Object.hasOwn(worldEvents, id);
+}
+
+function validDiary(value: unknown, age: number): boolean {
+  if (!Array.isArray(value) || value.length > diaryEntryLimit) return false;
+  let previousAge = 0;
+  for (const entry of value) {
+    if (!object(entry) || !integer(entry.ageInMonths, previousAge, age)
+      || typeof entry.text !== 'string' || !entry.text.trim() || entry.text.length > diaryTextLimit) return false;
+    previousAge = entry.ageInMonths;
+  }
+  return true;
 }
 
 function validEvent(event: Record<string, unknown>): boolean {
@@ -72,6 +90,9 @@ function validEvent(event: Record<string, unknown>): boolean {
     case 'birth': return event.ageInMonths === 0;
     case 'childhood-year': return [12, 24, 36, 48].includes(Number(event.ageInMonths));
     case 'death': return true;
+    case 'world': return validWorldId(event.id) && object(event.effects)
+      && Object.entries(event.effects).every(([key, value]) => oneOf(key, eventEffects) && integer(value, -100, 100))
+      && (event.person === undefined || oneOf(event.person, closePersonIds));
     case 'plan': return validPlan(event.plan);
     case 'childhood-choice':
       return event.ageInMonths === 48 && oneOf(event.choice, ['read-with-caregiver', 'play-with-peers']);
@@ -120,15 +141,15 @@ function validLife(value: unknown): value is LifeSnapshot {
     && validDevelopment(value.development) && validRelationships(value.relationships, ageInMonths)
     && integer(wellbeing.mood, 0, 100) && integer(wellbeing.monthsInPhase, 0, ageInMonths)
     && oneOf(wellbeing.phase, ['none', 'strain', 'withdrawn', 'recovering', 'resolved'])
-    && typeof wellbeing.support === 'boolean' && validChronicle(value.chronicle, ageInMonths, status.type);
+    && typeof wellbeing.support === 'boolean' && validDiary(value.diary, ageInMonths) && validChronicle(value.chronicle, ageInMonths, status.type);
 }
 
 export function decodeSave(raw: unknown): SaveRecord {
   if (!object(raw) || !integer(raw.schemaVersion, 1)) throw new InvalidSaveError('corrupt', raw);
 
-  // Each future version adds an explicit migration from its predecessor here.
-  if (raw.schemaVersion !== schemaVersion) throw new InvalidSaveError('version', raw);
-  if (!integer(raw.revision, 1) || !validLife(raw.life)) throw new InvalidSaveError('corrupt', raw);
-  if (raw.life.demographicsVersion !== demographics.version) throw new InvalidSaveError('data', raw);
-  return { schemaVersion, revision: raw.revision, life: raw.life };
+  if (raw.schemaVersion !== 1 && raw.schemaVersion !== schemaVersion) throw new InvalidSaveError('version', raw);
+  const life = raw.schemaVersion === 1 && object(raw.life) ? { ...raw.life, diary: [] } : raw.life;
+  if (!integer(raw.revision, 1) || !validLife(life)) throw new InvalidSaveError('corrupt', raw);
+  if (life.demographicsVersion !== demographics.version) throw new InvalidSaveError('data', raw);
+  return { schemaVersion, revision: raw.revision, life };
 }

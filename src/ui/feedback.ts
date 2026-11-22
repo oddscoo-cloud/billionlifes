@@ -22,8 +22,10 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
   if (monthDelta > 0) {
     const funds = next.development.funds - previous.development.funds;
     const details = [];
+    const events = next.chronicle.slice(previous.chronicle.length).filter(({ type }) => type === 'world');
+    if (events.length > 1) details.push(`событий вокруг героя — ${events.length}`);
     if (event) details.push(eventLabel(event));
-    if (funds > 0) details.push(`заработано ${funds} ед. достатка`);
+    if (funds !== 0) details.push(`достаток ${funds > 0 ? '+' : ''}${funds} ед.`);
     if (next.development.plan && previous.development !== next.development) {
       const { skills, appearance } = next.development;
       const before = previous.development;

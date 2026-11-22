@@ -1,4 +1,5 @@
 import { demographics } from '../data/demographics';
+import { worldEvents } from '../data/world-events';
 import { activities } from '../sim/actions';
 import type { ChildhoodChoice, LifeEvent, LifeStatus } from '../sim/life';
 import type { Plan } from '../sim/growth';
@@ -29,7 +30,7 @@ export const employmentLabels = {
 };
 
 export const skillLabels = { academics: 'Учёба', creativity: 'Творчество', communication: 'Общение' };
-export const peopleLabels = { caregiver: 'Опекун', friend: 'Друг детства' };
+export const peopleLabels = { caregiver: 'Опекун', friend: 'Друг детства', colleague: 'Коллега', neighbor: 'Сосед' };
 export const phaseLabels = {
   none: 'Стабильное состояние', strain: 'Трудности в группе', withdrawn: 'Замкнутость',
   recovering: 'Восстановление', resolved: 'Кризис пройден',
@@ -41,6 +42,7 @@ export function ageLabel(months: number): string {
 
 export function eventLabel(event: LifeEvent): string {
   switch (event.type) {
+    case 'world': return worldEvents[event.id][0];
     case 'birth': return 'Началась жизнь';
     case 'childhood-year': return 'День рождения';
     case 'death': return 'Жизнь завершилась';

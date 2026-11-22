@@ -33,7 +33,10 @@ describe('development and actions', () => {
     let monthly = active;
     for (let index = 0; index < 12; index += 1) monthly = advanceMonth(monthly);
     expect(advanceYear(active)).toEqual(monthly);
-    expect(monthly.development.skills.academics).toBe(active.development.skills.academics + 12);
+    const extraStudy = monthly.chronicle.slice(active.chronicle.length).reduce(
+      (total, event) => total + (event.type === 'world' ? event.effects.academics ?? 0 : 0), 0,
+    );
+    expect(monthly.development.skills.academics).toBe(active.development.skills.academics + 12 + extraStudy);
     expect(monthly.development.interests.study).toBe(active.development.interests.study + 12);
     expect(monthly.development.character.discipline).toBe(active.development.character.discipline + 12);
 

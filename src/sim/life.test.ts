@@ -41,7 +41,7 @@ describe('life progression', () => {
     expect(paused).toEqual(monthly);
     expect(paused.ageInMonths).toBe(48);
     expect(paused.status).toEqual({ type: 'decision', decision: 'first-childhood-activity' });
-    expect(paused.chronicle.map(({ ageInMonths }) => ageInMonths)).toEqual([0, 12, 24, 36, 48]);
+    expect(paused.chronicle.filter(({ type }) => type !== 'world').map(({ ageInMonths }) => ageInMonths)).toEqual([0, 12, 24, 36, 48]);
     expect(advanceYear(paused)).toBe(paused);
     expect(advanceMonth(paused)).toBe(paused);
 

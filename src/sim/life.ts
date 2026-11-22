@@ -5,6 +5,9 @@ import type { LifeAction, Milestone } from './actions';
 import type { NewLife } from './birth';
 import { advanceWellbeing } from './crisis';
 import type { CrisisChoice, Wellbeing } from './crisis';
+import type { DiaryEntry } from './diary';
+import { advanceWorld } from './world';
+import type { WorldEvent } from './world';
 import { grow, growMonth, initialDevelopment, plans } from './growth';
 import type { Development, Plan } from './growth';
 import { initialRelationships, remember } from './relationships';
@@ -13,7 +16,7 @@ import { drawRandom } from './random';
 
 export type ChildhoodChoice = 'read-with-caregiver' | 'play-with-peers';
 
-export type LifeEvent = {
+export type LifeEvent = WorldEvent | ({
   readonly ageInMonths: number;
 } & (
   | { readonly type: 'birth' | 'childhood-year' | 'death' }
@@ -26,7 +29,7 @@ export type LifeEvent = {
   | { readonly type: 'crisis'; readonly message: string; readonly choice?: CrisisChoice }
   | { readonly type: 'plan'; readonly plan: Plan | null }
   | { readonly type: 'childhood-choice'; readonly choice: ChildhoodChoice }
-);
+));
 
 export type LifeStatus =
   | { readonly type: 'active' }
@@ -40,12 +43,14 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
   readonly development: Development;
   readonly wellbeing: Wellbeing;
   readonly relationships: readonly Relationship[];
+  readonly diary: readonly DiaryEntry[];
   readonly chronicle: readonly LifeEvent[];
 }
 
 export function startLife(newLife: NewLife): LifeSnapshot {
   return {
     ...newLife,
+    diary: [],
     wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false },
     relationships: initialRelationships(),
     development: initialDevelopment(newLife.birth.family.means),
@@ -83,11 +88,13 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
 
   const development = growMonth(life.development);
   const milestone = milestoneAt(ageInMonths);
-  return advanceWellbeing({
+  const stepped = advanceWellbeing({
     ...next,
     development,
     status: milestone ? { type: 'decision', decision: milestone } : next.status,
   });
+  return stepped.status.type === 'active' && stepped.chronicle === life.chronicle
+    ? advanceWorld(stepped) : stepped;
 }
 
 export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {
