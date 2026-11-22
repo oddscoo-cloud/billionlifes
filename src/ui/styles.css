@@ -235,3 +235,5 @@ textarea {
 @media (max-width: 57.99rem) {
   .dashboard-grid.show-indicators .timeline { display: none; }
 }
+
+.autoplay-settings { display: flex; flex-wrap: wrap; align-items: end; gap: .55rem; }

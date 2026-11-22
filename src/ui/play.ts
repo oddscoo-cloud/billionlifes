@@ -1,3 +1,5 @@
+import { autoplayDelays } from './autoplay-delay';
+import type { AutoplayDelay } from './autoplay-delay';
 import { yearlyPrecipitation } from '../data/households';
 import { familySupport, griefChoices, resolveGrief } from '../sim/family';
 import { socialCircle } from './journal';
@@ -90,6 +92,8 @@ interface PlayHandlers {
   diary: () => void;
   auto: boolean;
   toggleAuto: () => void;
+  delay: AutoplayDelay;
+  changeDelay: (delay: AutoplayDelay) => void;
   more: () => void;
 }
 
@@ -174,8 +178,20 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
         () => handlers.commit(advanceMonth(life)), 'month'),
       choiceCard('Прожить год', 'До 12 месяцев. Важный выбор или смерть остановят ход раньше.',
         () => handlers.commit(advanceYear(life)), 'year', true)));
-    section.append(button(handlers.auto ? 'Остановить автоход' : 'Включить автоход',
-      handlers.toggleAuto, handlers.auto ? 'primary' : 'quiet', 'autoplay'),
+    const delay = el('select');
+    delay.id = 'autoplay-delay';
+    delay.append(...autoplayDelays.map((seconds) => new Option(
+      seconds === 1 ? '1 секунда' : seconds === 3 ? '3 секунды' : `${seconds} секунд`, String(seconds),
+    )));
+    delay.value = String(handlers.delay);
+    delay.addEventListener('change', () => {
+      const value = autoplayDelays.find((seconds) => String(seconds) === delay.value);
+      if (value !== undefined) handlers.changeDelay(value);
+    });
+    section.append(el('div', 'autoplay-settings',
+      el('label', 'field', 'Задержка автохода', delay),
+      button(handlers.auto ? 'Остановить автоход' : 'Включить автоход',
+        handlers.toggleAuto, handlers.auto ? 'primary' : 'quiet', 'autoplay')),
       el('p', 'helper', 'Автоход проживает месяцы за вас и останавливается у важных решений.'));
     if (life.ageInMonths < 48) {
       section.append(el('p', 'helper', 'В раннем детстве события попадают в хронику. Первое решение появится в четыре года.'));
