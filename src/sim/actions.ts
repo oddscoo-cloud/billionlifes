@@ -87,6 +87,7 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
       options.push(option('apply-university', [
         { label: 'Базовый шанс', contribution: 0.30 },
         { label: 'Подготовка', contribution: development.skills.academics * 0.005 },
+        { label: 'Стойкость', contribution: development.skills.resilience * 0.0015 },
         ...(persistent ? [{ label: traitLabels.persistent, contribution: 0.08 }] : []),
       ]));
     }
@@ -97,6 +98,7 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
       options.push(option('specialist-job', [
         { label: 'Квалификация', contribution: development.education === 'higher' ? 0.60 : 0.45 },
         { label: 'Общение', contribution: development.skills.communication * 0.003 },
+        { label: 'Практичность', contribution: development.skills.practical * 0.0015 },
         ...(open ? [{ label: traitLabels.open, contribution: 0.08 }] : []),
       ]));
     }

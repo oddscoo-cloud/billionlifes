@@ -42,7 +42,8 @@ export function metric(label: string, value: number): HTMLElement {
 
 const effectLabels: Record<EventEffect, string> = {
   mood: 'Настроение', funds: 'Достаток', academics: 'Учёба',
-  creativity: 'Творчество', communication: 'Общение', trust: 'Доверие',
+  creativity: 'Творчество', communication: 'Общение', resilience: 'Стойкость',
+  practical: 'Практичность', empathy: 'Эмпатия', trust: 'Доверие',
 };
 const signed = new Intl.NumberFormat('ru', { signDisplay: 'always' });
 
@@ -108,8 +109,7 @@ export function characterPanel(life: LifeSnapshot): HTMLElement {
 export function innerVoicePanel(life: LifeSnapshot): HTMLElement {
   const voice = innerVoice(life);
   return indicatorPanel('Внутри героя', 'voice',
-    el('p', 'voice-line', `«${voice.desire}»`),
-    el('p', 'helper', `Тревожная мысль: ${voice.worry}`));
+    el('p', 'voice-line', `«${voice.desire}»`));
 }
 
 interface PlayHandlers {

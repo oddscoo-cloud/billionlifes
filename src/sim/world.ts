@@ -119,31 +119,33 @@ function candidates(life: LifeSnapshot): EventChoice[] {
   } else if (ageInMonths < 18 * 12) {
     pool.push(
       { id: 'library-closed', mood: -2 },
-      { id: 'school-project', skills: { communication: 1, creativity: 1 } },
+      { id: 'school-project', skills: { communication: 1, creativity: 1, practical: 1 } },
       { id: 'missed-bus', mood: -2 }, { id: 'quiet-school', mood: 1 },
       { id: 'science-day', skills: { academics: 1, creativity: 1 } }, { id: 'lost-notebook', mood: -2 },
-      { id: 'team-practice', skills: { communication: 1 } },
+      { id: 'team-practice', skills: { communication: 1, resilience: 1 } },
     );
     if (plan === 'practice-art') pool.push({ id: 'drawing-display', skills: { creativity: 2 }, mood: 2 });
   } else {
     pool.push({ id: 'local-swap', mood: 2 }, { id: 'community-repair', mood: -2 }, development.funds > 0
       ? { id: 'cost-rise', funds: -1 } : { id: 'tight-budget', mood: -2 });
     if (employed(life)) {
-      pool.push({ id: 'quiet-shift', mood: 1 }, { id: 'shift-cut', funds: -1, mood: -2 }, { id: 'work-feedback', skills: { communication: 1 } });
+      pool.push({ id: 'quiet-shift', mood: 1 }, { id: 'shift-cut', funds: -1, mood: -2 },
+        { id: 'work-feedback', skills: { communication: 1, practical: 1 } });
       if (!relationships.some(({ id }) => id === 'colleague')) {
         pool.push({ id: 'new-colleague', mood: 2, contact: ['colleague', 5] });
       }
     } else if (development.employment === 'unemployed') {
       pool.push({ id: 'job-fair', skills: { communication: 2 } });
     }
-    if (ageInMonths >= 65 * 12) pool.push({ id: 'older-health', mood: -3 }, { id: 'old-recording', mood: 2 }, { id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2 });
+    if (ageInMonths >= 65 * 12) pool.push({ id: 'older-health', mood: -3 }, { id: 'old-recording', mood: 2 },
+      { id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2, skills: { practical: 1 } });
   }
   if (caregiver && caregiver.trust >= 60 && ageInMonths < 55 * 12) {
     pool.push({ id: 'phone-call', mood: 3, contact: ['caregiver', 1] });
   }
   if (plan === 'study') pool.push({ id: 'study-group', skills: { academics: 2 } });
   if (plan === 'practice-art') pool.push({ id: 'club-rehearsal', skills: { creativity: 2 } });
-  if (plan === 'community') pool.push({ id: 'community-meal', mood: 2, skills: { communication: 2, creativity: 1 } });
+  if (plan === 'community') pool.push({ id: 'community-meal', mood: 2, skills: { communication: 2, creativity: 1, empathy: 2 } });
   return pool;
 }
 
@@ -210,7 +212,7 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   if (mood !== wellbeing.mood) effects.mood = mood - wellbeing.mood;
   if (funds !== development.funds) effects.funds = funds - development.funds;
   let skills = development.skills;
-  for (const skill of ['academics', 'creativity', 'communication'] as const) {
+  for (const skill of ['academics', 'creativity', 'communication', 'resilience', 'practical', 'empathy'] as const) {
     const gain = Math.min(event.skills?.[skill] ?? 0, 100 - skills[skill]);
     if (gain > 0) {
       effects[skill] = gain;

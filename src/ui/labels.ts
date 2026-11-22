@@ -34,7 +34,10 @@ export const employmentLabels = {
   specialist: 'Работа по специальности', retired: 'На пенсии',
 };
 
-export const skillLabels = { academics: 'Учёба', creativity: 'Творчество', communication: 'Общение' };
+export const skillLabels = {
+  academics: 'Учёба', creativity: 'Творчество', communication: 'Общение',
+  resilience: 'Стойкость', practical: 'Практичность', empathy: 'Эмпатия',
+};
 export const peopleLabels = { caregiver: 'Опекун', friend: 'Друг детства', colleague: 'Коллега', neighbor: 'Сосед' };
 export const phaseLabels = {
   none: 'Стабильное состояние', strain: 'Трудности в группе', withdrawn: 'Замкнутость',

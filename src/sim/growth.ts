@@ -2,7 +2,7 @@ import type { HouseholdMeans } from './birth';
 
 export const plans = ['study', 'practice-art', 'community', 'personal-care'] as const;
 export type Plan = (typeof plans)[number];
-type Skill = 'academics' | 'creativity' | 'communication';
+export type Skill = 'academics' | 'creativity' | 'communication' | 'resilience' | 'practical' | 'empathy';
 
 export interface Development {
   readonly skills: Readonly<Record<Skill, number>>;
@@ -17,7 +17,7 @@ export interface Development {
 
 export function initialDevelopment(means: HouseholdMeans): Development {
   return {
-    skills: { academics: 0, creativity: 0, communication: 0 },
+    skills: { academics: 0, creativity: 0, communication: 0, resilience: 0, practical: 0, empathy: 0 },
     interests: { study: 0, 'practice-art': 0, community: 0, 'personal-care': 0 },
     appearance: 50,
     plan: null,

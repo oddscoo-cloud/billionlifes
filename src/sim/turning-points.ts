@@ -1,6 +1,7 @@
 import { remember } from './relationships';
 import type { LifeSnapshot } from './life';
 import { drawRandom } from './random';
+import type { Skill } from './growth';
 
 type Impact = readonly [mood: number, funds: number];
 
@@ -12,6 +13,7 @@ interface Response {
   readonly followup: string;
   readonly later: Impact;
   readonly trait: TraitId;
+  readonly skills?: Readonly<Partial<Record<Skill, number>>>;
 }
 
 interface Scenario {
@@ -173,10 +175,12 @@ export const turningPoints = {
     responses: [
       { label: 'Поговорить прямо', hint: 'Разговор может закончиться болезненно, но поможет понять, можно ли восстановить доверие.',
         outcome: 'Герой спокойно объяснил, почему это было больно, и выслушал ответ.', immediate: [-5, 0],
-        followup: 'Извинения не отменили случившееся, но между ними появились более честные границы.', later: [4, 0], trait: 'open' },
+        followup: 'Извинения не отменили случившееся, но между ними появились более честные границы.', later: [4, 0], trait: 'open',
+        skills: { empathy: 1 } },
       { label: 'Отдалиться', hint: 'Станет одиноко, зато появится пространство для безопасности и новых связей.',
         outcome: 'Герой перестал делиться личным и оставил отношения на расстоянии.', immediate: [-2, 0],
-        followup: 'Со временем стало спокойнее. Не всякая близость обязана продолжаться.', later: [3, 0], trait: 'careful' },
+        followup: 'Со временем стало спокойнее. Не всякая близость обязана продолжаться.', later: [3, 0], trait: 'careful',
+        skills: { resilience: 1 } },
     ],
   },
   'family-financial-crisis': {
@@ -185,10 +189,12 @@ export const turningPoints = {
     responses: [
       { label: 'Попросить помощи у близких', hint: 'Придётся признаться, что самостоятельно не справиться. Поддержка уменьшит ближайшее давление.',
         outcome: 'Герой честно рассказал о положении и попросил о временной помощи.', immediate: [-3, 3],
-        followup: 'Помощь не решила все проблемы, но позволила пережить самый острый период.', later: [5, 0], trait: 'open' },
+        followup: 'Помощь не решила все проблемы, но позволила пережить самый острый период.', later: [5, 0], trait: 'open',
+        skills: { empathy: 1 } },
       { label: 'Сократить всё необязательное', hint: 'Запас сохранится, но несколько месяцев жизнь будет заметно теснее.',
         outcome: 'Герой пересмотрел расходы и отказался от части привычных вещей.', immediate: [-5, 0],
-        followup: 'Новый бюджет оказался строгим, зато дал ощущение, что ситуация снова под контролем.', later: [4, 1], trait: 'resourceful' },
+        followup: 'Новый бюджет оказался строгим, зато дал ощущение, что ситуация снова под контролем.', later: [4, 1], trait: 'resourceful',
+        skills: { practical: 2 } },
     ],
   },
   'serious-illness-in-family': {
@@ -197,10 +203,54 @@ export const turningPoints = {
     responses: [
       { label: 'Взять заботу на себя', hint: 'Своих сил станет меньше, но близкий не останется один.',
         outcome: 'Герой перестроил распорядок и взял на себя часть заботы.', immediate: [-7, 0],
-        followup: 'Болезнь не исчезла сразу, но близкий знал: рядом есть человек, которому можно доверять.', later: [7, 0], trait: 'supportive' },
+        followup: 'Болезнь не исчезла сразу, но близкий знал: рядом есть человек, которому можно доверять.', later: [7, 0], trait: 'supportive',
+        skills: { empathy: 2 } },
       { label: 'Организовать помощь вместе', hint: 'Придётся просить других и координировать дела, зато нагрузка не ляжет на одного человека.',
         outcome: 'Герой собрал родственников и знакомых и распределил помощь.', immediate: [-4, 0],
-        followup: 'Забота стала общей. Было трудно, но никто не нёс всё в одиночку.', later: [6, 0], trait: 'resourceful' },
+        followup: 'Забота стала общей. Было трудно, но никто не нёс всё в одиночку.', later: [6, 0], trait: 'resourceful',
+        skills: { practical: 1, empathy: 1 } },
+    ],
+  },
+  'failed-exam': {
+    title: 'Экзамен не сдан',
+    story: 'Результат оказался хуже ожидаемого. На повторную попытку нужно время, а привычный план учёбы больше не работает.',
+    responses: [
+      { label: 'Подготовиться ещё раз', hint: 'Придётся отложить часть планов и признать, что прежнего подхода было недостаточно.',
+        outcome: 'Герой разобрал ошибки и составил новый план подготовки.', immediate: [-5, 0],
+        followup: 'Повторная попытка прошла лучше. Неудача осталась частью истории, но перестала быть её концом.', later: [6, 0], trait: 'persistent',
+        skills: { resilience: 2, academics: 1 } },
+      { label: 'Выбрать другой путь', hint: 'Образовательный маршрут изменится, зато не придётся бесконечно возвращаться к одному экзамену.',
+        outcome: 'Герой отказался от прежнего маршрута и стал искать практическую альтернативу.', immediate: [-2, 0],
+        followup: 'Новый путь оказался не похож на первоначальный план, но дал первые реальные результаты.', later: [5, 0], trait: 'resourceful',
+        skills: { practical: 2 } },
+    ],
+  },
+  'relationship-breakup': {
+    title: 'Отношения закончились',
+    story: 'После расставания привычные планы и общие места стали напоминать о том, что изменилось. Нужно решить, как пережить первые месяцы.',
+    responses: [
+      { label: 'Поговорить напоследок', hint: 'Разговор может причинить боль, но поможет поставить честную точку.',
+        outcome: 'Герой встретился и выслушал друг друга без попытки вернуть прошлое.', immediate: [-6, 0],
+        followup: 'Со временем воспоминания перестали каждый раз превращаться в новую ссору.', later: [6, 0], trait: 'open',
+        skills: { empathy: 1, resilience: 1 } },
+      { label: 'Сразу сменить распорядок', hint: 'Первые недели будут пустыми. Новые занятия помогут не возвращаться к прежней жизни каждый вечер.',
+        outcome: 'Герой убрал из расписания общие маршруты и заполнил освободившееся время.', immediate: [-4, 0],
+        followup: 'Новый распорядок не стёр прошлое, но вернул ощущение собственного пространства.', later: [5, 0], trait: 'independent',
+        skills: { resilience: 2 } },
+    ],
+  },
+  'housing-instability': {
+    title: 'Жильё оказалось под угрозой',
+    story: 'Запаса денег не хватает, чтобы спокойно оплатить жильё и обязательные расходы. Откладывать решение больше нельзя.',
+    responses: [
+      { label: 'Попросить временно принять у себя', hint: 'Придётся признаться в трудностях и согласиться на тесный, неудобный быт.',
+        outcome: 'Герой попросил близких о временном месте и составил план расходов.', immediate: [-5, 2],
+        followup: 'Совместный быт оказался непростым, но дал время снова найти опору.', later: [6, 0], trait: 'open',
+        skills: { empathy: 1, practical: 1 } },
+      { label: 'Срочно искать более дешёвое место', hint: 'Переезд будет рискованным и оставит мало сил. Зато часть расходов уменьшится.',
+        outcome: 'Герой переехал в менее удобное жильё и начал восстанавливать запас.', immediate: [-7, 0],
+        followup: 'Новое место не стало домом сразу, но расходы перестали расти так быстро.', later: [4, 2], trait: 'independent',
+        skills: { practical: 2, resilience: 1 } },
     ],
   },
 } as const satisfies Record<string, Scenario>;
@@ -228,6 +278,10 @@ export function advanceTurningPoint(life: LifeSnapshot): LifeSnapshot {
   if (age >= 18 * 12 && hasFriend) candidates.push('friend-betrayal');
   if (age >= 18 * 12 && life.development.funds <= 2) candidates.push('family-financial-crisis');
   if (age >= 25 * 12 && life.parents.some(({ diedAt }) => diedAt === undefined)) candidates.push('serious-illness-in-family');
+  if (age >= 16 * 12 && age < 26 * 12) candidates.push('failed-exam');
+  if (age >= 18 * 12 && life.development.funds === 0) candidates.push('housing-instability');
+  if (previous.some((event) => event.type === 'romance' && event.step === 'end'
+    && event.ageInMonths === age - 1)) candidates.push('relationship-breakup');
   if (age >= 65 * 12) candidates.push('changing-routine');
   if (recentWorld.some((event) => event.type === 'world' && event.id === 'move-paperwork' && event.ageInMonths === age - 2)) {
     candidates.push('unfamiliar-city');
@@ -237,7 +291,8 @@ export function advanceTurningPoint(life: LifeSnapshot): LifeSnapshot {
   ));
   const linked = fresh.find((id) =>
     id === 'unfamiliar-city' || (id === 'lost-job' && recentWorld.some((event) => event.type === 'world' && event.id === 'shift-cut'))
-    || (id === 'regular-place-closes' && recentWorld.some((event) => event.type === 'world' && event.id === 'community-repair')),
+    || (id === 'regular-place-closes' && recentWorld.some((event) => event.type === 'world' && event.id === 'community-repair'))
+    || id === 'relationship-breakup',
   );
   if (!linked && (age + life.seed % 6) % 6 !== 0) return life;
   const { value } = drawRandom((life.seed ^ Math.imul(age, 0x52ed134f)) >>> 0);
@@ -253,20 +308,25 @@ export function advanceTurningPoint(life: LifeSnapshot): LifeSnapshot {
   };
 }
 
-function applyImpact(life: LifeSnapshot, impact: Impact): LifeSnapshot {
+function applyImpact(life: LifeSnapshot, impact: Impact, skillImpact: Readonly<Partial<Record<Skill, number>>> = {}): LifeSnapshot {
   const [mood, funds] = impact;
+  const skills = Object.entries(skillImpact).reduce((next, [id, value]) => {
+    const skill = id as Skill;
+    return { ...next, [skill]: Math.min(100, next[skill] + (value ?? 0)) };
+  }, { ...life.development.skills });
   return {
     ...life,
     wellbeing: { ...life.wellbeing, mood: Math.max(0, Math.min(100, life.wellbeing.mood + mood)) },
-    development: { ...life.development, funds: Math.max(0, life.development.funds + funds) },
+    development: { ...life.development, funds: Math.max(0, life.development.funds + funds), skills },
   };
 }
 
 export function resolveTurningPoint(life: LifeSnapshot, response: ResponseIndex): LifeSnapshot {
   if (life.status.type !== 'decision' || life.status.decision !== 'turning-point' || (response !== 0 && response !== 1)) return life;
   const { id } = life.status;
+  const selected = turningPoints[id].responses[response];
   return {
-    ...applyImpact(life, turningPoints[id].responses[response].immediate),
+    ...applyImpact(life, selected.immediate, 'skills' in selected ? selected.skills : undefined),
     status: { type: 'active' },
     chronicle: [...life.chronicle, { type: 'turning-choice', id, response, ageInMonths: life.ageInMonths }],
   };
@@ -277,7 +337,8 @@ export function advanceTurningConsequences(life: LifeSnapshot): LifeSnapshot {
     const event = life.chronicle[index]!;
     if (event.ageInMonths < life.ageInMonths - 2) break;
     if (event.type !== 'turning-choice' || event.ageInMonths !== life.ageInMonths - 2) continue;
-    const changed = applyImpact(life, turningPoints[event.id].responses[event.response].later);
+    const selected = turningPoints[event.id].responses[event.response];
+    const changed = applyImpact(life, selected.later, 'skills' in selected ? selected.skills : undefined);
     const relationships = event.id === 'friend-conflict'
       ? remember(life.relationships, 'friend', {
         kind: event.response === 0 ? 'shared-hardship' : 'took-distance', ageInMonths: life.ageInMonths,
