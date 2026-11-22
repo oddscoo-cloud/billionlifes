@@ -3,6 +3,7 @@ import type { CountryCode } from '../data/demographics';
 import { grow } from './growth';
 import type { Development, Plan } from './growth';
 import type { LifeSnapshot } from './life';
+import { remember } from './relationships';
 import { drawRandom } from './random';
 
 export type Milestone = 'teen-activity' | 'adult-path' | 'later-life';
@@ -65,7 +66,7 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
   const { ageInMonths, status, development, countryOfResidence } = life;
   if (status.type === 'dead' || ageInMonths < 48) return [];
   if (status.type === 'decision') {
-    if (status.decision === 'first-childhood-activity') return [];
+    if (status.decision === 'first-childhood-activity' || status.decision === 'school-crisis') return [];
     if (status.decision === 'teen-activity') return [option('school-club'), option('volunteer')];
     if (status.decision === 'later-life') {
       return development.employment === 'entry-level' || development.employment === 'specialist'
@@ -168,8 +169,14 @@ export function resolveAction(life: LifeSnapshot, action: LifeAction): LifeSnaps
     ? { ...outcome.development, nextAdmissionAge: life.ageInMonths + 3 }
     : outcome.development;
 
+  const memory = action.id === 'school-club' ? 'club' : action.id === 'volunteer' ? 'volunteering' : null;
+  const relationships = succeeded && memory
+    ? remember(life.relationships, 'friend', { kind: memory, ageInMonths: life.ageInMonths }, 10)
+    : life.relationships;
+
   return {
     ...life,
+    relationships,
     development,
     countryOfResidence: outcome.countryOfResidence,
     randomState: roll?.state ?? life.randomState,
