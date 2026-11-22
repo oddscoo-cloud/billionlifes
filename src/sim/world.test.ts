@@ -88,3 +88,23 @@ it('uses local rainfall averages to make rainy events more common in a wetter co
   }).filter((mood) => mood === -3).length;
   expect(countRain('BR')).toBeGreaterThan(countRain('AU') * 2);
 });
+
+it('rotates distinct lines for a recurring event without advancing the gameplay draw', () => {
+  const base = { ...newborn(), countryOfResidence: 'BR' as const };
+  const age = Array.from({ length: 100 }, (_, index) => 250 + index).find((ageInMonths) =>
+    lastWorld(advanceWorld({ ...base, ageInMonths })).id === 'rain');
+  expect(age).toBeDefined();
+  const life = { ...base, ageInMonths: age! };
+  const variants: number[] = [];
+  const events: WorldEvent[] = [];
+  for (let occurrence = 0; occurrence < 5; occurrence += 1) {
+    const next = advanceWorld({ ...life, chronicle: [...life.chronicle, ...events] });
+    const event = lastWorld(next);
+    expect(event.id).toBe('rain');
+    expect(next.randomState).toBe(life.randomState);
+    variants.push(event.variant ?? 0);
+    events.push({ ...event, ageInMonths: age! - 20 + occurrence });
+  }
+  expect(new Set(variants.slice(0, 4)).size).toBe(4);
+  expect(variants[4]).toBe(variants[0]);
+});

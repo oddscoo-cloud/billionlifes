@@ -5,7 +5,8 @@ import type { AutoplayDelay } from './autoplay-delay';
 import { yearlyPrecipitation } from '../data/households';
 import { familySupport, griefChoices, resolveGrief } from '../sim/family';
 import { socialCircle } from './journal';
-import { eventEffects, worldEvents } from '../data/world-events';
+import { worldScene } from '../data/world-event-variants';
+import { eventEffects } from '../data/world-events';
 import type { EventEffect } from '../data/world-events';
 import type { WorldEvent } from '../sim/world';
 import { demographics } from '../data/demographics';
@@ -40,7 +41,7 @@ const effectLabels: Record<EventEffect, string> = {
 const signed = new Intl.NumberFormat('ru', { signDisplay: 'always' });
 
 function worldDetails(event: WorldEvent): HTMLElement {
-  const [, story] = worldEvents[event.id];
+  const [, story] = worldScene(event.id, event.variant);
   const changes = eventEffects.flatMap((effect) => {
     const value = event.effects[effect];
     if (!value) return [];
@@ -304,14 +305,26 @@ export function play(
   timeline.setAttribute('aria-label', 'Журнал жизни');
   timeline.tabIndex = 0;
   const grid = el('div', 'dashboard-grid', workspace, timeline, indicators);
-  const gameTab = button('Ходы и хроника', () => showIndicators(false), 'quiet');
-  const statsTab = button('Показатели', () => showIndicators(true), 'quiet', 'stats-tab');
-  function showIndicators(show: boolean): void {
-    grid.classList.toggle('show-indicators', show);
-    gameTab.setAttribute('aria-pressed', String(!show));
-    statsTab.setAttribute('aria-pressed', String(show));
+  const sections = [
+    ['turns', 'Ходы', workspace],
+    ['journal', 'Журнал жизни', timeline],
+    ['stats', 'Показатели', indicators],
+  ] as const;
+  const tabs = el('div', 'dashboard-tabs');
+  tabs.setAttribute('role', 'group');
+  tabs.setAttribute('aria-label', 'Разделы игры');
+  for (const [id, label, region] of sections) {
+    region.id = `dashboard-${id}`;
+    const tab = button(label, () => {
+      grid.dataset.mobilePanel = id;
+      for (const control of tabs.querySelectorAll('button')) {
+        control.setAttribute('aria-pressed', String(control === tab));
+      }
+    }, 'quiet', `${id}-tab`);
+    tab.setAttribute('aria-controls', region.id);
+    tab.setAttribute('aria-pressed', String(id === 'turns'));
+    tabs.append(tab);
   }
-  showIndicators(false);
-  const tabs = el('div', 'dashboard-tabs', gameTab, statsTab);
+  grid.dataset.mobilePanel = 'turns';
   return el('div', 'dashboard', profile, el('div', 'dashboard-content', tabs, grid));
 }

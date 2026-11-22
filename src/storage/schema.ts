@@ -1,3 +1,6 @@
+import { deathCauses } from '../sim/death-causes';
+import { worldVariantCount } from '../data/world-event-variants';
+import type { WorldEventId } from '../data/world-events';
 import { turningPoints } from '../sim/turning-points';
 import { griefChoices, initialParents, parentRoles } from '../sim/family';
 import type { BirthConditions } from '../sim/birth';
@@ -73,7 +76,7 @@ function validRelationships(value: unknown, age: number): boolean {
     && new Set(value.map((entry) => entry.id)).size === value.length;
 }
 
-function validWorldId(id: unknown): boolean {
+function validWorldId(id: unknown): id is WorldEventId {
   return typeof id === 'string' && Object.hasOwn(worldEvents, id);
 }
 
@@ -101,8 +104,10 @@ function validEvent(event: Record<string, unknown>): boolean {
     case 'turning-consequence': return validTurningPoint(event.id) && (event.response === 0 || event.response === 1);
     case 'parent-death': return oneOf(event.role, parentRoles);
     case 'family-response': return oneOf(event.choice, griefChoices);
-    case 'death': return true;
-    case 'world': return validWorldId(event.id) && object(event.effects)
+    case 'death': return event.cause === undefined || (typeof event.cause === 'string' && Object.hasOwn(deathCauses, event.cause));
+    case 'world': return validWorldId(event.id)
+      && (event.variant === undefined || integer(event.variant, 0, worldVariantCount(event.id) - 1))
+      && object(event.effects)
       && Object.entries(event.effects).every(([key, value]) => oneOf(key, eventEffects) && integer(value, -100, 100))
       && (event.country === undefined || oneOf(event.country, countryCodes))
       && (event.person === undefined || oneOf(event.person, closePersonIds));

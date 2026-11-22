@@ -1,6 +1,7 @@
+import { deathCauses } from '../sim/death-causes';
 import { turningPoints } from '../sim/turning-points';
 import { demographics } from '../data/demographics';
-import { worldEvents } from '../data/world-events';
+import { worldScene } from '../data/world-event-variants';
 import { activities } from '../sim/actions';
 import type { ChildhoodChoice, LifeEvent, LifeStatus } from '../sim/life';
 import type { Plan } from '../sim/growth';
@@ -50,10 +51,10 @@ export function eventLabel(event: LifeEvent): string {
     case 'turning-consequence': return turningPoints[event.id].responses[event.response].followup;
     case 'parent-death': return event.role === 'mother' ? 'Мама умерла' : 'Папа умер';
     case 'family-response': return event.choice === 'support' ? 'Герой обратился за поддержкой' : 'Герой вспомнил хорошие моменты';
-    case 'world': return worldEvents[event.id][0];
+    case 'world': return worldScene(event.id, event.variant)[0];
     case 'birth': return 'Началась жизнь';
     case 'childhood-year': return 'День рождения';
-    case 'death': return 'Жизнь завершилась';
+    case 'death': return event.cause ? `Жизнь завершилась · ${deathCauses[event.cause][0].toLowerCase()}` : 'Жизнь завершилась';
     case 'childhood-choice': return childhoodLabels[event.choice];
     case 'crisis': return event.message;
     case 'plan': return event.plan ? `План — ${planLabels[event.plan]}` : 'План отменён';

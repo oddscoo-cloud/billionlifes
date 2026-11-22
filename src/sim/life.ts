@@ -1,3 +1,5 @@
+import { chooseDeathCause } from './death-causes';
+import type { DeathCause } from './death-causes';
 import { advanceTurningConsequences, advanceTurningPoint } from './turning-points';
 import type { ResponseIndex, TurningPointId } from './turning-points';
 import { advanceParents, initialParents } from './family';
@@ -23,13 +25,14 @@ export type ChildhoodChoice = 'read-with-caregiver' | 'play-with-peers';
 export type LifeEvent = WorldEvent | ({
   readonly ageInMonths: number;
 } & (
-  | { readonly type: 'birth' | 'childhood-year' | 'death' }
+  | { readonly type: 'birth' | 'childhood-year' }
   | {
       readonly type: 'action';
       readonly action: LifeAction;
       readonly succeeded: boolean;
       readonly chance: number;
     }
+  | { readonly type: 'death'; readonly cause?: DeathCause }
   | { readonly type: 'turning-point'; readonly id: TurningPointId }
   | { readonly type: 'turning-choice' | 'turning-consequence'; readonly id: TurningPointId; readonly response: ResponseIndex }
   | { readonly type: 'parent-death'; readonly role: ParentRole }
@@ -85,7 +88,7 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
     return {
       ...next,
       status: { type: 'dead' },
-      chronicle: [...life.chronicle, { type: 'death', ageInMonths }],
+      chronicle: [...life.chronicle, { type: 'death', ageInMonths, cause: chooseDeathCause(life, ageInMonths) }],
     };
   }
 

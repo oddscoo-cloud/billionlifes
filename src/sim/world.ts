@@ -1,3 +1,4 @@
+import { worldVariantCount } from '../data/world-event-variants';
 import { yearlyPrecipitation } from '../data/households';
 import type { CountryCode } from '../data/demographics';
 import { countryCodes } from '../data/demographics';
@@ -11,6 +12,7 @@ export type WorldEvent = {
   readonly type: 'world';
   readonly id: WorldEventId;
   readonly ageInMonths: number;
+  readonly variant?: number;
   readonly effects: Readonly<Partial<Record<EventEffect, number>>>;
   readonly country?: CountryCode;
   readonly person?: ClosePersonId;
@@ -91,7 +93,7 @@ function candidates(life: LifeSnapshot): EventChoice[] {
       { id: 'family-routine', mood: 1 }, { id: 'photo-for-family', mood: 1 },
       { id: 'shared-breakfast', mood: 2 }, { id: 'borrowed-toy', mood: 1 },
     ];
-    if (ageInMonths >= 12) family.push({ id: 'new-words', mood: 1 });
+    if (ageInMonths >= 12) family.push({ id: 'new-words', mood: 1 }, { id: 'child-fever', mood: -3 });
     if (birth.family.olderSiblings > 0) family.push({ id: 'sibling-game', mood: 2 });
     if (birth.startingHealth === 'needs-support' && ageInMonths <= 9) {
       family.push({ id: 'health-check', mood: 1 });
@@ -99,6 +101,7 @@ function candidates(life: LifeSnapshot): EventChoice[] {
     return family;
   }
   const pool = [...everyday];
+  if (ageInMonths < 12 * 12) pool.push({ id: 'child-fever', mood: -3 });
   if (friend && friend.trust >= 45) pool.push({ id: 'friend-note', mood: 3, contact: ['friend', 1] });
   if (neighbor) pool.push({ id: 'neighbor-help', mood: 2, contact: ['neighbor', 1] });
   if (ageInMonths < 6 * 12) {
@@ -124,7 +127,7 @@ function candidates(life: LifeSnapshot): EventChoice[] {
     } else if (development.employment === 'unemployed') {
       pool.push({ id: 'job-fair', skill: ['communication', 2] });
     }
-    if (ageInMonths >= 65 * 12) pool.push({ id: 'old-recording', mood: 2 }, { id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2 });
+    if (ageInMonths >= 65 * 12) pool.push({ id: 'older-health', mood: -3 }, { id: 'old-recording', mood: 2 }, { id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2 });
   }
   if (caregiver && caregiver.trust >= 60 && ageInMonths < 55 * 12) {
     pool.push({ id: 'phone-call', mood: 3, contact: ['caregiver', 1] });
@@ -141,6 +144,22 @@ function rainEvent(life: LifeSnapshot): EventChoice {
   return { id: 'rain', mood: -3 };
 }
 
+function chooseVariant(life: LifeSnapshot, id: WorldEventId): number {
+  const count = worldVariantCount(id);
+  if (count === 1) return 0;
+  const unused = new Set(Array.from({ length: count }, (_, index) => index));
+  const recent: number[] = [];
+  for (let index = life.chronicle.length - 1; index >= 0 && unused.size; index -= 1) {
+    const event = life.chronicle[index]!;
+    if (event.type === 'world' && event.id === id && unused.delete(event.variant ?? 0)) {
+      recent.push(event.variant ?? 0);
+    }
+  }
+  if (!unused.size) return recent.at(-1)!;
+  const { value } = drawRandom((life.seed ^ Math.imul(life.ageInMonths, 0x5bd1e995)) >>> 0);
+  return [...unused][Math.floor(value * unused.size)]!;
+}
+
 export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   const { ageInMonths, wellbeing, development, relationships } = life;
   const recent = recentEvents(life, 3);
@@ -155,10 +174,14 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   const wet = ageInMonths >= 48 && value < rainChance ? rainEvent(life) : undefined;
   const draw = ageInMonths >= 48 && !wet ? (value - rainChance) / (1 - rainChance) : value;
   const blocked = new Set(recent.flatMap((event) => event.type === 'world' ? [event.id] : []));
-  const pool = candidates(life).filter(({ id }) => !blocked.has(id));
+  const eligible = candidates(life).filter(({ id }) => !blocked.has(id));
+  const seenRecently = new Set(recentEvents(life, 10).flatMap((event) => event.type === 'world' ? [event.id] : []));
+  const fresh = eligible.filter(({ id }) => !seenRecently.has(id));
+  const pool = fresh.length ? fresh : eligible;
   const event = followup ?? wet ?? pool[Math.floor(draw * pool.length)];
   if (!event) return life;
 
+  const variant = chooseVariant(life, event.id);
   const effects: Partial<Record<EventEffect, number>> = {};
   const mood = wellbeing.phase === 'none' || wellbeing.phase === 'resolved'
     ? Math.max(0, Math.min(100, wellbeing.mood + (event.mood ?? 0))) : wellbeing.mood;
@@ -189,7 +212,7 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
     wellbeing: { ...wellbeing, mood },
     relationships: contacts,
     chronicle: [...life.chronicle, {
-      type: 'world', id: event.id, ageInMonths, effects, country: life.countryOfResidence, ...(person ? { person } : {}),
+      type: 'world', id: event.id, ageInMonths, effects, ...(variant ? { variant } : {}), country: life.countryOfResidence, ...(person ? { person } : {}),
     }],
   };
 }
