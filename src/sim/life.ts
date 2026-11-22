@@ -22,6 +22,8 @@ import { initialRelationships, remember } from './relationships';
 import type { Relationship } from './relationships';
 import { drawRandom } from './random';
 
+export const firstChoiceAgeInMonths = 4 * 12;
+
 export type ChildhoodChoice = 'read-with-caregiver' | 'play-with-peers';
 
 export type LifeEvent = WorldEvent | ({
@@ -96,10 +98,10 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
     };
   }
 
-  if (ageInMonths <= 48 && ageInMonths % 12 === 0) {
+  if (ageInMonths <= firstChoiceAgeInMonths && ageInMonths % 12 === 0) {
     return advanceRelatives({
       ...next,
-      status: ageInMonths === 48
+      status: ageInMonths === firstChoiceAgeInMonths
         ? { type: 'decision', decision: 'first-childhood-activity' }
         : next.status,
       chronicle: [...life.chronicle, { type: 'childhood-year', ageInMonths }],
@@ -146,16 +148,24 @@ export function advanceAuto(life: LifeSnapshot): LifeSnapshot {
   return next;
 }
 
-export function advanceYear(life: LifeSnapshot): LifeSnapshot {
+function advanceMonths(life: LifeSnapshot, months: number): LifeSnapshot {
   let next = life;
-  for (let month = 0; month < 12 && next.status.type === 'active'; month += 1) {
+  for (let month = 0; month < months && next.status.type === 'active'; month += 1) {
     next = advanceMonth(next);
   }
   return next;
 }
 
+export function advanceYear(life: LifeSnapshot): LifeSnapshot {
+  return advanceMonths(life, 12);
+}
+
+export function advanceEarlyChildhood(life: LifeSnapshot): LifeSnapshot {
+  return advanceMonths(life, firstChoiceAgeInMonths - life.ageInMonths);
+}
+
 export function setPlan(life: LifeSnapshot, plan: Plan | null): LifeSnapshot {
-  if (life.status.type !== 'active' || life.ageInMonths < 48
+  if (life.status.type !== 'active' || life.ageInMonths < firstChoiceAgeInMonths
     || plan === life.development.plan || (plan !== null && !plans.includes(plan))) return life;
 
   return {

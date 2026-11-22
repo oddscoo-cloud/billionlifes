@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { monthlyMortality } from '../data/demographics';
 import { createLife } from './birth';
 import {
-  advanceMonth, advanceYear, availableChildhoodChoices, resolveChildhoodChoice, startLife,
+  advanceEarlyChildhood, advanceMonth, advanceYear, availableChildhoodChoices, resolveChildhoodChoice, startLife,
 } from './life';
 import { drawRandom } from './random';
 
@@ -39,6 +39,9 @@ describe('life progression', () => {
     for (let month = 0; month < 12; month += 1) monthly = advanceMonth(monthly);
     const paused = advanceYear(life);
     expect(paused).toEqual(monthly);
+    expect(advanceEarlyChildhood(life)).toEqual(paused);
+    expect(advanceEarlyChildhood(newborn())).toEqual(paused);
+    expect(advanceEarlyChildhood(paused)).toBe(paused);
     expect(paused.ageInMonths).toBe(48);
     expect(paused.status).toEqual({ type: 'decision', decision: 'first-childhood-activity' });
     expect(paused.chronicle.filter(({ type }) => type !== 'world').map(({ ageInMonths }) => ageInMonths)).toEqual([0, 12, 24, 36, 48]);
@@ -53,6 +56,7 @@ describe('life progression', () => {
       expect(resumed.chronicle.at(-1)).toEqual({
         type: 'childhood-choice', ageInMonths: 48, choice,
       });
+      expect(advanceEarlyChildhood(resumed)).toBe(resumed);
       expect(advanceMonth(resumed).ageInMonths).toBe(49);
     }
     expect(availableChildhoodChoices(paused)).toHaveLength(2);
@@ -67,6 +71,7 @@ describe('life progression', () => {
     };
     const dead = advanceYear(start);
     expect(dead).toEqual(advanceMonth(start));
+    expect(advanceEarlyChildhood(start)).toEqual(dead);
     expect(dead.ageInMonths).toBe(1);
     expect(dead.status.type).toBe('dead');
     expect(dead.chronicle.at(-1)).toMatchObject({ type: 'death', ageInMonths: 1 });
