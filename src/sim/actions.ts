@@ -28,7 +28,7 @@ export interface ActionOption {
 
 type Outcome = Pick<LifeSnapshot, 'development' | 'countryOfResidence'>;
 
-const activities = {
+export const activities = {
   'school-club': 'Вступить в школьный кружок',
   volunteer: 'Помочь местному сообществу',
   'apply-university': 'Попробовать поступить в университет',
