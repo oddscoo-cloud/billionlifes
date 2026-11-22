@@ -1,3 +1,5 @@
+import { advanceTurningConsequences, advanceTurningPoint } from './turning-points';
+import type { ResponseIndex, TurningPointId } from './turning-points';
 import { advanceParents, initialParents } from './family';
 import type { Parent, ParentRole, GriefChoice } from './family';
 import { monthlyMortality } from '../data/demographics';
@@ -28,6 +30,8 @@ export type LifeEvent = WorldEvent | ({
       readonly succeeded: boolean;
       readonly chance: number;
     }
+  | { readonly type: 'turning-point'; readonly id: TurningPointId }
+  | { readonly type: 'turning-choice' | 'turning-consequence'; readonly id: TurningPointId; readonly response: ResponseIndex }
   | { readonly type: 'parent-death'; readonly role: ParentRole }
   | { readonly type: 'family-response'; readonly choice: GriefChoice }
   | { readonly type: 'crisis'; readonly message: string; readonly choice?: CrisisChoice }
@@ -39,6 +43,7 @@ export type Decision = 'first-childhood-activity' | 'school-crisis' | Milestone;
 export type LifeStatus =
   | { readonly type: 'active' }
   | { readonly type: 'decision'; readonly decision: Decision }
+  | { readonly type: 'decision'; readonly decision: 'turning-point'; readonly id: TurningPointId }
   | { readonly type: 'decision'; readonly decision: 'family-loss'; readonly resume?: Decision }
   | { readonly type: 'dead' };
 
@@ -101,9 +106,9 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
     development,
     status: milestone ? { type: 'decision', decision: milestone } : next.status,
   });
-  const withParents = advanceParents(stepped);
-  return withParents.status.type === 'active' && withParents.chronicle === life.chronicle
-    ? advanceWorld(withParents) : withParents;
+  const withParents = advanceParents(advanceTurningConsequences(stepped));
+  if (withParents.status.type !== 'active' || withParents.chronicle !== life.chronicle) return withParents;
+  return advanceTurningPoint(advanceWorld(withParents));
 }
 
 export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {

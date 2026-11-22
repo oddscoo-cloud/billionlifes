@@ -4,7 +4,7 @@ import type { WorldEventId } from '../data/world-events';
 export const closePersonIds = ['caregiver', 'friend', 'colleague', 'neighbor'] as const;
 export type ClosePersonId = (typeof closePersonIds)[number];
 
-export const memoryKinds = ['shared-reading', 'shared-play', 'club', 'volunteering', 'asked-for-help'] as const;
+export const memoryKinds = ['shared-reading', 'shared-play', 'club', 'volunteering', 'asked-for-help', 'shared-hardship', 'took-distance'] as const;
 
 export type Memory = { readonly ageInMonths: number } & (
   | { readonly kind: (typeof memoryKinds)[number] }
@@ -30,7 +30,7 @@ export function remember(
   const next = {
     id,
     ...(place ? { country: place } : {}),
-    trust: Math.min(100, (person?.trust ?? 35) + trust),
+    trust: Math.max(0, Math.min(100, (person?.trust ?? 35) + trust)),
     memories: [...(person?.memories ?? []), memory],
   };
   return person ? relationships.map((entry) => entry.id === id ? next : entry) : [...relationships, next];

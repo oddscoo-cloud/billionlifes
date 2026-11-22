@@ -26,7 +26,7 @@ type EventChoice = {
 
 const everyday: readonly EventChoice[] = [
   { id: 'market', mood: 1 }, { id: 'power-outage', mood: -2 },
-  { id: 'evening-out', mood: 2 }, { id: 'unplanned-visit', mood: 2 }, { id: 'quiet-routine', mood: 1 },
+  { id: 'evening-out', mood: 2 }, { id: 'unplanned-visit', mood: 2 }, { id: 'shared-ride', mood: 1 }, { id: 'quiet-routine', mood: 1 },
 ];
 
 function recentEvents(life: LifeSnapshot, months: number): readonly LifeEvent[] {
@@ -88,7 +88,8 @@ function candidates(life: LifeSnapshot): EventChoice[] {
   if (ageInMonths < 48) {
     const family: EventChoice[] = [
       { id: 'family-walk', mood: 2 }, { id: 'rough-night', mood: -2 }, { id: 'visiting-family', mood: 1 },
-      { id: 'family-routine', mood: 1 },
+      { id: 'family-routine', mood: 1 }, { id: 'photo-for-family', mood: 1 },
+      { id: 'shared-breakfast', mood: 2 }, { id: 'borrowed-toy', mood: 1 },
     ];
     if (ageInMonths >= 12) family.push({ id: 'new-words', mood: 1 });
     if (birth.family.olderSiblings > 0) family.push({ id: 'sibling-game', mood: 2 });
@@ -108,20 +109,22 @@ function candidates(life: LifeSnapshot): EventChoice[] {
       { id: 'library-closed', mood: -2 },
       { id: 'school-project', skill: ['communication', 1] },
       { id: 'missed-bus', mood: -2 }, { id: 'quiet-school', mood: 1 },
+      { id: 'science-day', skill: ['academics', 1] }, { id: 'lost-notebook', mood: -2 },
+      { id: 'team-practice', skill: ['communication', 1] },
     );
     if (plan === 'practice-art') pool.push({ id: 'drawing-display', skill: ['creativity', 2], mood: 2 });
   } else {
-    pool.push({ id: 'community-repair', mood: -2 }, development.funds > 0
+    pool.push({ id: 'local-swap', mood: 2 }, { id: 'community-repair', mood: -2 }, development.funds > 0
       ? { id: 'cost-rise', funds: -1 } : { id: 'tight-budget', mood: -2 });
     if (employed(life)) {
-      pool.push({ id: 'shift-cut', funds: -1, mood: -2 }, { id: 'work-feedback', skill: ['communication', 1] });
+      pool.push({ id: 'quiet-shift', mood: 1 }, { id: 'shift-cut', funds: -1, mood: -2 }, { id: 'work-feedback', skill: ['communication', 1] });
       if (!relationships.some(({ id }) => id === 'colleague')) {
         pool.push({ id: 'new-colleague', mood: 2, contact: ['colleague', 5] });
       }
     } else if (development.employment === 'unemployed') {
       pool.push({ id: 'job-fair', skill: ['communication', 2] });
     }
-    if (ageInMonths >= 65 * 12) pool.push({ id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2 });
+    if (ageInMonths >= 65 * 12) pool.push({ id: 'old-recording', mood: 2 }, { id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2 });
   }
   if (caregiver && caregiver.trust >= 60 && ageInMonths < 55 * 12) {
     pool.push({ id: 'phone-call', mood: 3, contact: ['caregiver', 1] });
@@ -145,8 +148,8 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   // Ambient events have a separate deterministic draw so they never consume a mortality or action roll.
   const { value } = drawRandom((life.seed ^ Math.imul(ageInMonths, 0x9e3779b9) ^ (residence << 24)) >>> 0);
   const followup = connected(life, recent);
-  const rhythm = (ageInMonths + life.seed % 5) % 5;
-  if (!followup && rhythm !== 0 && rhythm !== 2) return life;
+  const rhythm = (ageInMonths + life.seed % 4) % 4;
+  if (!followup && rhythm === 3) return life;
   // Annual precipitation is a weighting proxy, not an observed probability of rainy days.
   const rainChance = yearlyPrecipitation[life.countryOfResidence] / 6500;
   const wet = ageInMonths >= 48 && value < rainChance ? rainEvent(life) : undefined;

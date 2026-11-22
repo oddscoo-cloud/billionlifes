@@ -1,3 +1,4 @@
+import { turningPoints } from '../sim/turning-points';
 import { griefChoices, initialParents, parentRoles } from '../sim/family';
 import type { BirthConditions } from '../sim/birth';
 import { countryCodes, demographics, sexes } from '../data/demographics';
@@ -9,7 +10,7 @@ import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
 import { closePersonIds, memoryKinds } from '../sim/relationships';
 
-export const schemaVersion = 3;
+export const schemaVersion = 4;
 
 export interface SaveRecord {
   readonly schemaVersion: typeof schemaVersion;
@@ -54,7 +55,7 @@ function validBirth(birth: unknown): birth is BirthConditions {
 
 function validDevelopment(value: unknown): boolean {
   return object(value) && scores(value.skills, ['academics', 'creativity', 'communication'])
-    && scores(value.interests, plans) && scores(value.character, ['discipline', 'openness'])
+    && scores(value.interests, plans)
     && integer(value.appearance, 0, 100) && validPlan(value.plan)
     && oneOf(value.education, ['general', 'vocational', 'higher'])
     && oneOf(value.employment, ['unemployed', 'entry-level', 'specialist', 'retired'])
@@ -87,10 +88,17 @@ function validDiary(value: unknown, age: number): boolean {
   return true;
 }
 
+function validTurningPoint(id: unknown): boolean {
+  return typeof id === 'string' && Object.hasOwn(turningPoints, id);
+}
+
 function validEvent(event: Record<string, unknown>): boolean {
   switch (event.type) {
     case 'birth': return event.ageInMonths === 0;
     case 'childhood-year': return [12, 24, 36, 48].includes(Number(event.ageInMonths));
+    case 'turning-point': return validTurningPoint(event.id);
+    case 'turning-choice':
+    case 'turning-consequence': return validTurningPoint(event.id) && (event.response === 0 || event.response === 1);
     case 'parent-death': return oneOf(event.role, parentRoles);
     case 'family-response': return oneOf(event.choice, griefChoices);
     case 'death': return true;
@@ -146,6 +154,10 @@ function validLife(value: unknown): value is LifeSnapshot {
     if (status.decision === 'family-loss') {
       if (!value.parents.some((parent) => parent.diedAt === ageInMonths)
         || (status.resume !== undefined && !ordinary(status.resume))) return false;
+    } else if (status.decision === 'turning-point') {
+      const last = Array.isArray(value.chronicle) ? value.chronicle.at(-1) : null;
+      if (!validTurningPoint(status.id) || last?.type !== 'turning-point'
+        || last.id !== status.id || last.ageInMonths !== ageInMonths) return false;
     } else if (!ordinary(status.decision)) return false;
   }
   return validBirth(value.birth) && oneOf(value.countryOfResidence, countryCodes)
@@ -161,8 +173,12 @@ export function decodeSave(raw: unknown): SaveRecord {
 
   if (raw.schemaVersion > schemaVersion) throw new InvalidSaveError('version', raw);
   let life = raw.life;
-  if (raw.schemaVersion < schemaVersion && object(life) && validBirth(life.birth) && integer(life.seed, 0, 0xffff_ffff)) {
+  if (raw.schemaVersion < 3 && object(life) && validBirth(life.birth) && integer(life.seed, 0, 0xffff_ffff)) {
     life = { ...life, parents: initialParents(life.birth.family, life.seed), ...(raw.schemaVersion === 1 ? { diary: [] } : {}) };
+  }
+  if (raw.schemaVersion < schemaVersion && object(life) && object(life.development)) {
+    const { character: _obsolete, ...development } = life.development;
+    life = { ...life, development };
   }
   if (!integer(raw.revision, 1) || !validLife(life)) throw new InvalidSaveError('corrupt', raw);
   if (life.demographicsVersion !== demographics.version) throw new InvalidSaveError('data', raw);

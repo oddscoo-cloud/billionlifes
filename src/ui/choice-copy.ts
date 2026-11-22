@@ -4,10 +4,10 @@ import type { Plan } from '../sim/growth';
 import type { ChildhoodChoice, LifeStatus } from '../sim/life';
 
 export const planEffects: Record<Plan, string> = {
-  study: 'Развивает навык учёбы и дисциплину. Это повышает шансы на поступление.',
-  'practice-art': 'Развивает творчество и открытость.',
-  community: 'Развивает общение и открытость. Это помогает на собеседовании.',
-  'personal-care': 'Повышает привлекательность и дисциплину.',
+  study: 'Развивает навык учёбы. Это повышает шансы на поступление.',
+  'practice-art': 'Развивает творчество.',
+  community: 'Развивает навык общения. Это помогает на собеседовании.',
+  'personal-care': 'Повышает привлекательность.',
 };
 
 export const childhoodEffects: Record<ChildhoodChoice, string> = {
@@ -26,6 +26,7 @@ export const decisionContext: Record<Extract<LifeStatus, { type: 'decision' }>['
   'teen-activity': 'Выберите занятие, которое станет ежемесячным планом.',
   'adult-path': 'Выберите, с чего начать взрослую жизнь. К учёбе или работе можно вернуться позже.',
   'later-life': 'Решите, как герой будет жить после 65 лет.',
+  'turning-point': 'У каждого решения будут последствия.',
   'family-loss': 'Выберите, как герой переживёт потерю близкого.',
   'school-crisis': 'Выберите, как герой справится с трудностями в группе.',
 };

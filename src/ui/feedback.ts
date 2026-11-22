@@ -1,3 +1,5 @@
+import { characterTraits, traitLabels } from '../sim/traits';
+import { turningPoints } from '../sim/turning-points';
 import type { LifeSnapshot } from '../sim/life';
 import { ageLabel, decisionLabels, eventLabel, planLabels } from './labels';
 
@@ -18,7 +20,9 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
   }
   if (monthDelta === 0 && event?.type === 'family-response') return `${eventLabel(event)}.`;
   if (next.status.type === 'decision') {
-    return `Время продвинулось на ${elapsedLabel(monthDelta)}. Ход остановлен: ${decisionLabels[next.status.decision].toLowerCase()}.`;
+    const title = next.status.decision === 'turning-point' ? turningPoints[next.status.id].title
+      : decisionLabels[next.status.decision];
+    return `Время продвинулось на ${elapsedLabel(monthDelta)}. Ход остановлен: ${title.toLowerCase()}.`;
   }
   if (monthDelta > 0) {
     const funds = next.development.funds - previous.development.funds;
@@ -36,6 +40,11 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
       }
     }
     return `Время продвинулось на ${elapsedLabel(monthDelta)}${details.length ? ` · ${details.join(' · ')}` : ''}.`;
+  }
+  if (event?.type === 'turning-choice') {
+    const trait = turningPoints[event.id].responses[event.response].trait;
+    const wasKnown = characterTraits(previous).some(({ id }) => id === trait);
+    return eventLabel(event) + (wasKnown ? '' : ` Новая черта — ${traitLabels[trait].toLowerCase()}.`);
   }
   if (event?.type === 'action' && event.action.id === 'apply-university' && !event.succeeded) {
     return 'Не удалось поступить. Повторная попытка доступна через три месяца.';
