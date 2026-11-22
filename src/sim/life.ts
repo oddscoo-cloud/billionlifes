@@ -61,3 +61,25 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
 
   return next;
 }
+
+export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {
+  return life.status.type === 'decision' ? ['read-with-caregiver', 'play-with-peers'] : [];
+}
+
+export function resolveChildhoodChoice(life: LifeSnapshot, choice: ChildhoodChoice): LifeSnapshot {
+  if (!availableChildhoodChoices(life).includes(choice)) return life;
+
+  return {
+    ...life,
+    status: { type: 'active' },
+    chronicle: [...life.chronicle, { type: 'childhood-choice', ageInMonths: life.ageInMonths, choice }],
+  };
+}
+
+export function advanceYear(life: LifeSnapshot): LifeSnapshot {
+  let next = life;
+  for (let month = 0; month < 12 && next.status.type === 'active'; month += 1) {
+    next = advanceMonth(next);
+  }
+  return next;
+}
