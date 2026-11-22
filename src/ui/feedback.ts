@@ -42,10 +42,12 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
     }
     return `Время продвинулось на ${elapsedLabel(monthDelta)}${details.length ? ` · ${details.join(' · ')}` : ''}.`;
   }
+  if (event?.type === 'sibling-visit' || event?.type === 'romance') return `${eventLabel(event)}.`;
   if (event?.type === 'turning-choice') {
     const trait = turningPoints[event.id].responses[event.response].trait;
-    const wasKnown = characterTraits(previous).some(({ id }) => id === trait);
-    return eventLabel(event) + (wasKnown ? '' : ` Новая черта — ${traitLabels[trait].toLowerCase()}.`);
+    const isNew = characterTraits(next).some(({ id }) => id === trait)
+      && !characterTraits(previous).some(({ id }) => id === trait);
+    return eventLabel(event) + (isNew ? ` Новая черта — ${traitLabels[trait].toLowerCase()}.` : '');
   }
   if (event?.type === 'action' && event.action.id === 'apply-university' && !event.succeeded) {
     return 'Не удалось поступить. Повторная попытка доступна через три месяца.';

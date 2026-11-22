@@ -1,3 +1,4 @@
+import { siblings } from './siblings';
 import { worldVariantCount } from '../data/world-event-variants';
 import { yearlyPrecipitation } from '../data/households';
 import type { CountryCode } from '../data/demographics';
@@ -15,6 +16,7 @@ export type WorldEvent = {
   readonly variant?: number;
   readonly effects: Readonly<Partial<Record<EventEffect, number>>>;
   readonly country?: CountryCode;
+  readonly sibling?: number;
   readonly person?: ClosePersonId;
 };
 
@@ -22,7 +24,7 @@ type EventChoice = {
   readonly id: WorldEventId;
   readonly mood?: number;
   readonly funds?: number;
-  readonly skill?: readonly [keyof LifeSnapshot['development']['skills'], number];
+  readonly skills?: Readonly<Partial<LifeSnapshot['development']['skills']>>;
   readonly contact?: readonly [ClosePersonId, number];
 };
 
@@ -61,10 +63,10 @@ function connected(life: LifeSnapshot, recent: readonly LifeEvent[]): EventChoic
     const sharedReading = relationships.some((person) => person.id === 'caregiver'
       && person.memories.some((memory) => memory.kind === 'shared-reading'));
     return sharedReading
-      ? { id: 'library-return', mood: 3, skill: ['academics', 3], contact: ['caregiver', 2] }
-      : { id: 'library-open', mood: 2, skill: ['academics', 1] };
+      ? { id: 'library-return', mood: 3, skills: { academics: 3 }, contact: ['caregiver', 2] }
+      : { id: 'library-open', mood: 2, skills: { academics: 1 } };
   }
-  if (after('community-repair')) return { id: 'community-reopen', mood: 3, skill: ['communication', 1] };
+  if (after('community-repair')) return { id: 'community-reopen', mood: 3, skills: { communication: 1 } };
   if (after('shift-cut') && employed(life)) {
     const colleague = relationships.find(({ id }) => id === 'colleague');
     const local = colleague?.country === life.countryOfResidence;
@@ -84,6 +86,7 @@ function employed(life: LifeSnapshot): boolean {
 function candidates(life: LifeSnapshot): EventChoice[] {
   const { ageInMonths, development, relationships, birth } = life;
   const plan = development.plan;
+  const hasSibling = siblings(life).some(({ diedAt }) => diedAt === undefined);
   const caregiver = relationships.find(({ id }) => id === 'caregiver');
   const friend = relationships.find(({ id }) => id === 'friend');
   const neighbor = relationships.some(({ id, country }) => id === 'neighbor' && country === life.countryOfResidence);
@@ -94,52 +97,55 @@ function candidates(life: LifeSnapshot): EventChoice[] {
       { id: 'shared-breakfast', mood: 2 }, { id: 'borrowed-toy', mood: 1 },
     ];
     if (ageInMonths >= 12) family.push({ id: 'new-words', mood: 1 }, { id: 'child-fever', mood: -3 });
-    if (birth.family.olderSiblings > 0) family.push({ id: 'sibling-game', mood: 2 });
+    if (hasSibling) family.push({ id: 'sibling-game', mood: 2 });
     if (birth.startingHealth === 'needs-support' && ageInMonths <= 9) {
       family.push({ id: 'health-check', mood: 1 });
     }
     return family;
   }
   const pool = [...everyday];
+  if (hasSibling) pool.push(ageInMonths < 18 * 12
+    ? { id: 'sibling-project', mood: 2, skills: { creativity: 1, communication: 1 } }
+    : { id: 'sibling-reunion', mood: 2, skills: { communication: 1 } });
   if (ageInMonths < 12 * 12) pool.push({ id: 'child-fever', mood: -3 });
   if (friend && friend.trust >= 45) pool.push({ id: 'friend-note', mood: 3, contact: ['friend', 1] });
   if (neighbor) pool.push({ id: 'neighbor-help', mood: 2, contact: ['neighbor', 1] });
   if (ageInMonths < 6 * 12) {
-    pool.push({ id: 'playground', mood: 2, skill: ['communication', 1] },
-      { id: 'paint-together', skill: ['creativity', 1] });
+    pool.push({ id: 'playground', mood: 2, skills: { communication: 1 } },
+      { id: 'paint-together', skills: { creativity: 1 } });
   } else if (ageInMonths < 18 * 12) {
     pool.push(
       { id: 'library-closed', mood: -2 },
-      { id: 'school-project', skill: ['communication', 1] },
+      { id: 'school-project', skills: { communication: 1, creativity: 1 } },
       { id: 'missed-bus', mood: -2 }, { id: 'quiet-school', mood: 1 },
-      { id: 'science-day', skill: ['academics', 1] }, { id: 'lost-notebook', mood: -2 },
-      { id: 'team-practice', skill: ['communication', 1] },
+      { id: 'science-day', skills: { academics: 1, creativity: 1 } }, { id: 'lost-notebook', mood: -2 },
+      { id: 'team-practice', skills: { communication: 1 } },
     );
-    if (plan === 'practice-art') pool.push({ id: 'drawing-display', skill: ['creativity', 2], mood: 2 });
+    if (plan === 'practice-art') pool.push({ id: 'drawing-display', skills: { creativity: 2 }, mood: 2 });
   } else {
     pool.push({ id: 'local-swap', mood: 2 }, { id: 'community-repair', mood: -2 }, development.funds > 0
       ? { id: 'cost-rise', funds: -1 } : { id: 'tight-budget', mood: -2 });
     if (employed(life)) {
-      pool.push({ id: 'quiet-shift', mood: 1 }, { id: 'shift-cut', funds: -1, mood: -2 }, { id: 'work-feedback', skill: ['communication', 1] });
+      pool.push({ id: 'quiet-shift', mood: 1 }, { id: 'shift-cut', funds: -1, mood: -2 }, { id: 'work-feedback', skills: { communication: 1 } });
       if (!relationships.some(({ id }) => id === 'colleague')) {
         pool.push({ id: 'new-colleague', mood: 2, contact: ['colleague', 5] });
       }
     } else if (development.employment === 'unemployed') {
-      pool.push({ id: 'job-fair', skill: ['communication', 2] });
+      pool.push({ id: 'job-fair', skills: { communication: 2 } });
     }
     if (ageInMonths >= 65 * 12) pool.push({ id: 'older-health', mood: -3 }, { id: 'old-recording', mood: 2 }, { id: 'old-photos', mood: 2 }, { id: 'garden', mood: 2 });
   }
   if (caregiver && caregiver.trust >= 60 && ageInMonths < 55 * 12) {
     pool.push({ id: 'phone-call', mood: 3, contact: ['caregiver', 1] });
   }
-  if (plan === 'study') pool.push({ id: 'study-group', skill: ['academics', 2] });
-  if (plan === 'practice-art') pool.push({ id: 'club-rehearsal', skill: ['creativity', 2] });
-  if (plan === 'community') pool.push({ id: 'community-meal', mood: 2, skill: ['communication', 2] });
+  if (plan === 'study') pool.push({ id: 'study-group', skills: { academics: 2 } });
+  if (plan === 'practice-art') pool.push({ id: 'club-rehearsal', skills: { creativity: 2 } });
+  if (plan === 'community') pool.push({ id: 'community-meal', mood: 2, skills: { communication: 2, creativity: 1 } });
   return pool;
 }
 
 function rainEvent(life: LifeSnapshot): EventChoice {
-  if (life.development.plan === 'study') return { id: 'rain-study', mood: -1, skill: ['academics', 1] };
+  if (life.development.plan === 'study') return { id: 'rain-study', mood: -1, skills: { academics: 1 } };
   if (employed(life)) return { id: 'rain-commute', mood: -4 };
   return { id: 'rain', mood: -3 };
 }
@@ -189,14 +195,17 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   if (mood !== wellbeing.mood) effects.mood = mood - wellbeing.mood;
   if (funds !== development.funds) effects.funds = funds - development.funds;
   let skills = development.skills;
-  if (event.skill) {
-    const [skill, points] = event.skill;
-    const gain = Math.min(points, 100 - skills[skill]);
+  for (const skill of ['academics', 'creativity', 'communication'] as const) {
+    const gain = Math.min(event.skills?.[skill] ?? 0, 100 - skills[skill]);
     if (gain > 0) {
       effects[skill] = gain;
       skills = { ...skills, [skill]: skills[skill] + gain };
     }
   }
+  const familyEvent = event.id === 'sibling-game' || event.id === 'sibling-project' || event.id === 'sibling-reunion';
+  const relatives = familyEvent ? siblings(life).filter(({ diedAt }) => diedAt === undefined) : [];
+  const sibling = relatives.length ? relatives[ageInMonths % relatives.length] : undefined;
+  if (sibling && sibling.trust < 100) effects.trust = Math.min(2, 100 - sibling.trust);
   let contacts = relationships;
   const person = event.contact?.[0];
   if (event.contact && person) {
@@ -212,7 +221,7 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
     wellbeing: { ...wellbeing, mood },
     relationships: contacts,
     chronicle: [...life.chronicle, {
-      type: 'world', id: event.id, ageInMonths, effects, ...(variant ? { variant } : {}), country: life.countryOfResidence, ...(person ? { person } : {}),
+      type: 'world', id: event.id, ageInMonths, effects, ...(variant ? { variant } : {}), country: life.countryOfResidence, ...(sibling ? { sibling: sibling.index } : {}), ...(person ? { person } : {}),
     }],
   };
 }

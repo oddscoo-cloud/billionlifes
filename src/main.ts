@@ -134,7 +134,9 @@ function mount(session: LifeSession): void {
       const focus = destination === 'diary' ? 'diary-text' : next.status.type === 'decision' ? 'turn-title'
         : previous?.status.type === 'active' && next.status.type === 'active' ? previousFocus : '';
       app.inert = false;
-      render(focus === 'apply-plan' ? 'life-plan' : focus || (autoplay ? undefined : 'screen-title'), autoplay);
+      const socialAction = next.status.type === 'active' && /^(sibling|romance)-/.test(previousFocus);
+      render(socialAction ? 'dashboard-stats' : focus === 'apply-plan' ? 'life-plan'
+        : focus || (autoplay ? undefined : 'screen-title'), autoplay || socialAction);
       scheduleAutoplay();
     } catch (error) {
       stopAutoplay();
@@ -169,7 +171,8 @@ function mount(session: LifeSession): void {
       const mobilePanel = quiet && app.querySelector<HTMLElement>('.dashboard-grid')?.dataset.mobilePanel;
       const panels = ['.workspace', '.timeline', '.indicators'];
       const scroll = quiet ? panels.map((selector) => app.querySelector(selector)?.scrollTop ?? 0) : [];
-      const expanded = quiet && app.querySelector('.social-details[open]') !== null;
+      const expanded = quiet ? ['.social-details', '.romance-actions'].filter((selector) =>
+        app.querySelector(`${selector}[open]`) !== null) : [];
       const home = () => setScreen('home');
       const more = () => { limit += 50; render('older-events', true); };
       const openDiary = () => setScreen('diary');
@@ -179,7 +182,7 @@ function mount(session: LifeSession): void {
           delay: autoplayDelay, changeDelay: changeAutoplayDelay,
         }));
       if (mobilePanel) app.querySelector<HTMLButtonElement>(`#${mobilePanel}-tab`)?.click();
-      if (expanded) app.querySelector('.social-details')?.setAttribute('open', '');
+      for (const selector of expanded) app.querySelector(selector)?.setAttribute('open', '');
       for (const [index, top] of scroll.entries()) app.querySelector(panels[index]!)?.scrollTo(0, top);
     } else {
       app.replaceChildren(startScreen(life, () => setScreen('play'), () => setScreen('birth', 'birth-name')));

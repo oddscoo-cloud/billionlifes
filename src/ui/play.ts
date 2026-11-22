@@ -1,3 +1,7 @@
+import { siblings } from '../sim/siblings';
+import { healthStatus } from '../sim/health';
+import { availableRomance, chooseRomance, romance, romanceLabels } from '../sim/romance';
+import type { RomanceAction } from '../sim/romance';
 import { characterTraits, traitLabels } from '../sim/traits';
 import { resolveTurningPoint, turningPoints } from '../sim/turning-points';
 import { autoplayDelays } from './autoplay-delay';
@@ -40,18 +44,20 @@ const effectLabels: Record<EventEffect, string> = {
 };
 const signed = new Intl.NumberFormat('ru', { signDisplay: 'always' });
 
-function worldDetails(event: WorldEvent): HTMLElement {
+function worldDetails(event: WorldEvent, life: LifeSnapshot): HTMLElement {
   const [, story] = worldScene(event.id, event.variant);
+  const sibling = event.sibling === undefined ? undefined : siblings(life)[event.sibling];
   const changes = eventEffects.flatMap((effect) => {
     const value = event.effects[effect];
     if (!value) return [];
-    const label = effect === 'trust' && event.person
-      ? `Доверие · ${peopleLabels[event.person]}` : effectLabels[effect];
+    const relation = event.person ? peopleLabels[event.person] : sibling?.role;
+    const label = effect === 'trust' && relation ? `Доверие · ${relation}` : effectLabels[effect];
     return [el('span', value > 0 ? 'gain' : 'loss', `${label} ${signed.format(value)}`)];
   });
   const context = event.id.startsWith('rain') && event.country ? el('p', 'helper',
     `Осадки в стране — в среднем ${yearlyPrecipitation[event.country]} мм в год по данным Всемирного банка.`) : null;
-  return el('div', 'world-details', el('p', 'helper', story),
+  const family = sibling ? el('p', 'helper', `Вместе с ${sibling.role === 'Брат' ? 'братом' : 'сестрой'}.`) : null;
+  return el('div', 'world-details', el('p', 'helper', story), ...(family ? [family] : []),
     ...(changes.length ? [el('div', 'effects', ...changes)] : []), ...(context ? [context] : []));
 }
 
@@ -59,7 +65,7 @@ export function chronicle(life: LifeSnapshot, limit: number, more: () => void): 
   const items = el('ol', 'chronicle');
   for (const event of life.chronicle.slice(-limit).reverse()) {
     const content = event.type === 'world'
-      ? el('details', 'world-entry', el('summary', '', eventLabel(event)), worldDetails(event))
+      ? el('details', 'world-entry', el('summary', '', eventLabel(event)), worldDetails(event, life))
       : event.type === 'turning-point' || event.type === 'turning-consequence'
         ? el('div', 'turning-entry', el('span', 'turning-entry-label', event.type === 'turning-point' ? 'Трудный выбор' : 'Последствие решения'),
           el('span', '', eventLabel(event)))
@@ -219,7 +225,7 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
       if (event) section.append(el('p', '', eventLabel(event)));
     }
     if (status.decision === 'family-loss') {
-      const losses = life.chronicle.filter((event) => event.type === 'parent-death' && event.ageInMonths === life.ageInMonths);
+      const losses = life.chronicle.filter((event) => (event.type === 'parent-death' || event.type === 'sibling-death') && event.ageInMonths === life.ageInMonths);
       section.append(el('p', '', losses.map(eventLabel).join('. ') + '.'));
     }
     if (scene) {
@@ -260,6 +266,31 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
   return section;
 }
 
+const romanceActions: Record<RomanceAction, string> = {
+  date: 'Предложить свидание', 'spend-time': 'Провести время вдвоём',
+  love: 'Поговорить о чувствах', end: 'Поставить точку',
+};
+
+function wellbeingPanel(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLElement {
+  const health = healthStatus(life);
+  const current = romance(life);
+  const section = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
+    metric('Настроение', life.wellbeing.mood), facts([['Здоровье', health.label]]),
+    el('p', 'helper', health.detail));
+  if (life.ageInMonths < 18 * 12) return section;
+  if (!current) {
+    section.append(facts([['Романтика', 'Пока нет']]));
+    return section;
+  }
+  section.append(facts([[romanceLabels[current.stage], current.name]]));
+  const options = availableRomance(life);
+  if (options.length) section.append(el('details', 'romance-actions', el('summary', '', 'Романтика'),
+    ...(current.stage === 'date' && !options.includes('love')
+      ? [el('p', 'helper', 'Разговор о чувствах станет доступен после двух встреч и четырёх месяцев отношений.')] : []),
+    ...options.map((step) => button(romanceActions[step], () => commit(chooseRomance(life, step)), 'quiet', `romance-${step}`))));
+  return section;
+}
+
 export function play(
   life: LifeSnapshot, selected: ActionOption | null, limit: number, handlers: PlayHandlers,
 ): HTMLElement {
@@ -286,16 +317,16 @@ export function play(
     ['Достаток семьи', householdMeans[family.means]],
     ['Здоровье', startingHealth === 'typical' ? 'Обычное' : 'Требовалась поддержка'],
   ]));
-  const wellbeing = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
-    metric('Настроение', life.wellbeing.mood));
+  const wellbeing = wellbeingPanel(life, handlers.commit);
   const indicators = el('aside', 'indicators', el('div', 'indicator-grid',
     wellbeing, ...development(life), indicatorPanel('О герое', 'profile', data, metric('Привлекательность', life.development.appearance), birth)),
-    socialCircle(life));
+    socialCircle(life, handlers.commit));
   indicators.setAttribute('aria-label', 'Показатели героя');
+  indicators.tabIndex = -1;
   const recent = life.chronicle.slice(-12).reverse().find((event) => event.type === 'world');
   const spotlight = recent?.type === 'world' && life.ageInMonths - recent.ageInMonths <= 2
     ? [el('section', 'panel world-spotlight', el('p', 'world-kicker', `Вокруг героя · ${ageLabel(recent.ageInMonths)}`),
-      el('h2', '', eventLabel(recent)), worldDetails(recent))]
+      el('h2', '', eventLabel(recent)), worldDetails(recent, life))]
     : [];
   const turn = controls(life, selected, handlers);
   const workspace = el('section', 'workspace stack', turn);

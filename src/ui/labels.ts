@@ -20,7 +20,7 @@ export const decisionLabels: Record<Extract<LifeStatus, { type: 'decision' }>['d
   'adult-path': 'Начало взрослой жизни',
   'later-life': 'Решение о жизни после 65',
   'turning-point': 'Трудный выбор',
-  'family-loss': 'Потеря родителя',
+  'family-loss': 'Потеря близкого',
   'school-crisis': 'Трудности в учебной группе',
 };
 
@@ -49,6 +49,17 @@ export function eventLabel(event: LifeEvent): string {
     case 'turning-point': return turningPoints[event.id].title;
     case 'turning-choice': return turningPoints[event.id].responses[event.response].outcome;
     case 'turning-consequence': return turningPoints[event.id].responses[event.response].followup;
+    case 'sibling-death': return event.role === 'Сестра' ? 'Умерла сестра' : 'Умер брат';
+    case 'sibling-visit': return event.role === 'Сестра' ? 'Герой провёл время с сестрой' : 'Герой провёл время с братом';
+    case 'romance': {
+      switch (event.step) {
+        case 'meet': return `Появилась симпатия к человеку по имени ${event.name}`;
+        case 'date': return `Начались отношения · ${event.name}`;
+        case 'spend-time': return `Время вдвоём · ${event.name}`;
+        case 'love': return `Чувства оказались взаимными · ${event.name}`;
+        case 'end': return `Романтическая история завершилась · ${event.name}`;
+      }
+    }
     case 'parent-death': return event.role === 'mother' ? 'Мама умерла' : 'Папа умер';
     case 'family-response': return event.choice === 'support' ? 'Герой обратился за поддержкой' : 'Герой вспомнил хорошие моменты';
     case 'world': return worldScene(event.id, event.variant)[0];

@@ -1,8 +1,10 @@
+import { advanceRomance } from './romance';
+import type { RomanceEvent } from './romance';
 import { chooseDeathCause } from './death-causes';
 import type { DeathCause } from './death-causes';
 import { advanceTurningConsequences, advanceTurningPoint } from './turning-points';
 import type { ResponseIndex, TurningPointId } from './turning-points';
-import { advanceParents, initialParents } from './family';
+import { advanceRelatives, initialParents } from './family';
 import type { Parent, ParentRole, GriefChoice } from './family';
 import { monthlyMortality } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
@@ -35,6 +37,8 @@ export type LifeEvent = WorldEvent | ({
   | { readonly type: 'death'; readonly cause?: DeathCause }
   | { readonly type: 'turning-point'; readonly id: TurningPointId }
   | { readonly type: 'turning-choice' | 'turning-consequence'; readonly id: TurningPointId; readonly response: ResponseIndex }
+  | { readonly type: 'romance'; readonly step: RomanceEvent; readonly name: string }
+  | { readonly type: 'sibling-death' | 'sibling-visit'; readonly index: number; readonly role: 'Брат' | 'Сестра' }
   | { readonly type: 'parent-death'; readonly role: ParentRole }
   | { readonly type: 'family-response'; readonly choice: GriefChoice }
   | { readonly type: 'crisis'; readonly message: string; readonly choice?: CrisisChoice }
@@ -93,7 +97,7 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
   }
 
   if (ageInMonths <= 48 && ageInMonths % 12 === 0) {
-    return advanceParents({
+    return advanceRelatives({
       ...next,
       status: ageInMonths === 48
         ? { type: 'decision', decision: 'first-childhood-activity' }
@@ -109,9 +113,9 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
     development,
     status: milestone ? { type: 'decision', decision: milestone } : next.status,
   });
-  const withParents = advanceParents(advanceTurningConsequences(stepped));
+  const withParents = advanceRelatives(advanceTurningConsequences(stepped));
   if (withParents.status.type !== 'active' || withParents.chronicle !== life.chronicle) return withParents;
-  return advanceTurningPoint(advanceWorld(withParents));
+  return advanceTurningPoint(advanceRomance(advanceWorld(withParents)));
 }
 
 export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {
