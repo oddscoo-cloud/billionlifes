@@ -1,0 +1,1398 @@
+{
+  "version": "wpp2024-2023-v1",
+  "year": 2023,
+  "countries": {
+    "UA": {
+      "name": "Украина",
+      "births": 212231,
+      "mortality": {
+        "male": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.00630154
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00121016
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.0007225
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00134841
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00866868
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.01967439
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.0221521
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.02509662
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.03107584
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.04163424
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.05045649
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.06375114
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.0847831
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.12323727
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.1721617
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.24837033
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.26426676
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.3526311
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.4589349
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.57680267
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.69036524
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 3.1609
+          }
+        ],
+        "female": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.00545841
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00095663
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.0005921
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00074658
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00153966
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.00181216
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.00267576
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.00420876
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.00719885
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.01215356
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.01554138
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.01984661
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.0259232
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.0415144
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.06900687
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.1193269
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.18990607
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.26185499
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.3536
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.46409407
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.58436164
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 3.9176
+          }
+        ]
+      }
+    },
+    "IN": {
+      "name": "Индия",
+      "births": 23219489,
+      "mortality": {
+        "male": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.02273948
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00473054
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00231623
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00177328
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.0032941
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.00491239
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.00647038
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.00870171
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.01285931
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.01929133
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.02673125
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.04026293
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.06932112
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.09926852
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.15003853
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.21146086
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.29446957
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.4085405
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.52666245
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.65647098
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.77008404
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 2.602
+          }
+        ],
+        "female": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.02250544
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00553359
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00192693
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00186154
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00274407
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.0034337
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.004778
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.00521969
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.00673684
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.01098883
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.01569846
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.02631907
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.05220599
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.07563368
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.11414695
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.17395862
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.26849502
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.37636423
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.49793106
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.64818131
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.77551357
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 2.4965
+          }
+        ]
+      }
+    },
+    "NG": {
+      "name": "Нигерия",
+      "births": 7509758,
+      "mortality": {
+        "male": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.07476366
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.03833211
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.02910434
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.01668509
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.02138902
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.03060766
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.03212774
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.03422223
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.03832061
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.04611166
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.05584494
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.07353083
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.09543381
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.13547782
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.19510736
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.28706458
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.40998183
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.56271956
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.724227
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.86470174
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.93719242
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 1.5201
+          }
+        ],
+        "female": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.06405374
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.03623322
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.03884085
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.02001705
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.02308495
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.02715731
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.03154329
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.03618694
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.04124728
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.04660549
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.05132028
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.06470614
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.08633209
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.1254146
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.18729191
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.27903947
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.39774348
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.54702162
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.69294986
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.83017503
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.91097743
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 1.7044
+          }
+        ]
+      }
+    },
+    "MX": {
+      "name": "Мексика",
+      "births": 2037689,
+      "mortality": {
+        "male": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.01138845
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00214747
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00115446
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00169573
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00619372
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.01168736
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.01478746
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.0159209
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.01809474
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.02249125
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.02949651
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.03952727
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.05726464
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.07994374
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.10756972
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.15753577
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.23165228
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.33357639
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.46457874
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.60871592
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.75343643
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 2.4625
+          }
+        ],
+        "female": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.00926444
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00204825
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00099973
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00121053
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00246539
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.00315924
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.00385085
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.00469114
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.00623274
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.00922625
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.01450484
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.02186435
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.0349083
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.05300346
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.07841301
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.11817836
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.19298797
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.31811244
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.48914022
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.66273622
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.82742002
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 1.9246
+          }
+        ]
+      }
+    },
+    "BR": {
+      "name": "Бразилия",
+      "births": 2601670,
+      "mortality": {
+        "male": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.01347391
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00181509
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00082295
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00125094
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00796519
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.01185381
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.01121037
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.01162886
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.0138157
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.01767487
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.02397621
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.03502577
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.04912175
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.07207911
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.10340529
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.1499611
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.24414825
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.38366112
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.572128
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.74415669
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.88553676
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 1.658
+          }
+        ],
+        "female": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.01056626
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00165991
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00066619
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 0.00088604
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00214402
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.00285706
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.00338986
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.00448019
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.00644135
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.00923332
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.01315683
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.01923529
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.02793815
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.04203688
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.0624897
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.09527414
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.17117317
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.30443956
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.5030752
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.68485404
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.84486549
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 1.9127
+          }
+        ]
+      }
+    },
+    "AU": {
+      "name": "Австралия",
+      "births": 304340,
+      "mortality": {
+        "male": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.00331604
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00060185
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00037917
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 4.798e-05
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 0.00020964
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.00013573
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 6.852e-05
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 2.5e-05
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.00019297
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.00260459
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.00832904
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.01472138
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.02852663
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.05431087
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.05140388
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.08462935
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.13997348
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.24813062
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.43197518
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.6635133
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.85276182
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 1.7858
+          }
+        ],
+        "female": [
+          {
+            "startAge": 0,
+            "years": 1,
+            "deathProbability": 0.00305946
+          },
+          {
+            "startAge": 1,
+            "years": 4,
+            "deathProbability": 0.00064334
+          },
+          {
+            "startAge": 5,
+            "years": 5,
+            "deathProbability": 0.00026091
+          },
+          {
+            "startAge": 10,
+            "years": 5,
+            "deathProbability": 2.5e-05
+          },
+          {
+            "startAge": 15,
+            "years": 5,
+            "deathProbability": 6.471e-05
+          },
+          {
+            "startAge": 20,
+            "years": 5,
+            "deathProbability": 0.00053743
+          },
+          {
+            "startAge": 25,
+            "years": 5,
+            "deathProbability": 0.00015688
+          },
+          {
+            "startAge": 30,
+            "years": 5,
+            "deathProbability": 0.00012884
+          },
+          {
+            "startAge": 35,
+            "years": 5,
+            "deathProbability": 0.00078633
+          },
+          {
+            "startAge": 40,
+            "years": 5,
+            "deathProbability": 0.00217817
+          },
+          {
+            "startAge": 45,
+            "years": 5,
+            "deathProbability": 0.00500837
+          },
+          {
+            "startAge": 50,
+            "years": 5,
+            "deathProbability": 0.00788737
+          },
+          {
+            "startAge": 55,
+            "years": 5,
+            "deathProbability": 0.01657038
+          },
+          {
+            "startAge": 60,
+            "years": 5,
+            "deathProbability": 0.02834745
+          },
+          {
+            "startAge": 65,
+            "years": 5,
+            "deathProbability": 0.03222996
+          },
+          {
+            "startAge": 70,
+            "years": 5,
+            "deathProbability": 0.05622173
+          },
+          {
+            "startAge": 75,
+            "years": 5,
+            "deathProbability": 0.09071845
+          },
+          {
+            "startAge": 80,
+            "years": 5,
+            "deathProbability": 0.17930684
+          },
+          {
+            "startAge": 85,
+            "years": 5,
+            "deathProbability": 0.33088008
+          },
+          {
+            "startAge": 90,
+            "years": 5,
+            "deathProbability": 0.56884256
+          },
+          {
+            "startAge": 95,
+            "years": 5,
+            "deathProbability": 0.79364283
+          },
+          {
+            "startAge": 100,
+            "years": null,
+            "deathProbability": 1.0,
+            "remainingLifeYears": 2.0594
+          }
+        ]
+      }
+    }
+  }
+}
