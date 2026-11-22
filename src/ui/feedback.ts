@@ -16,6 +16,7 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
   if (next.status.type === 'dead') {
     return `Ход завершился в возрасте ${ageLabel(next.ageInMonths)}. Открыта итоговая сводка жизни.`;
   }
+  if (monthDelta === 0 && event?.type === 'family-response') return `${eventLabel(event)}.`;
   if (next.status.type === 'decision') {
     return `Время продвинулось на ${elapsedLabel(monthDelta)}. Ход остановлен: ${decisionLabels[next.status.decision].toLowerCase()}.`;
   }
@@ -45,7 +46,7 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
   if (event?.type === 'action') return `${eventLabel(event)}.`;
   if (event?.type === 'crisis') return event.message;
   if (event?.type === 'childhood-choice') return event.choice === 'read-with-caregiver'
-    ? 'Совместное чтение развило навык учёбы и укрепило доверие опекуна.'
+    ? 'Совместное чтение развило навык учёбы и укрепило доверие в семье.'
     : 'Игра со сверстниками развила навык общения. У героя появился друг детства.';
   if (event?.type === 'plan') return event.plan
     ? `План «${planLabels[event.plan]}» выбран. Он начнёт действовать со следующего хода.`

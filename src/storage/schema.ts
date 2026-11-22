@@ -1,3 +1,5 @@
+import { griefChoices, initialParents, parentRoles } from '../sim/family';
+import type { BirthConditions } from '../sim/birth';
 import { countryCodes, demographics, sexes } from '../data/demographics';
 import { activities, milestoneAt } from '../sim/actions';
 import { crisisChoices } from '../sim/crisis';
@@ -7,7 +9,7 @@ import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
 import { closePersonIds, memoryKinds } from '../sim/relationships';
 
-export const schemaVersion = 2;
+export const schemaVersion = 3;
 
 export interface SaveRecord {
   readonly schemaVersion: typeof schemaVersion;
@@ -41,13 +43,13 @@ function validPlan(value: unknown): boolean {
   return value === null || oneOf(value, plans);
 }
 
-function validBirth(birth: unknown): boolean {
+function validBirth(birth: unknown): birth is BirthConditions {
   if (!object(birth)) return false;
   const { name, sex, countryOfBirth, family, startingHealth } = birth;
   return typeof name === 'string' && name.trim().length > 0 && oneOf(sex, sexes)
     && oneOf(countryOfBirth, countryCodes) && oneOf(startingHealth, ['typical', 'needs-support'])
     && object(family) && oneOf(family.caregivers, ['two-parents', 'one-parent', 'other-guardians'])
-    && integer(family.olderSiblings, 0, 3) && oneOf(family.means, ['limited', 'moderate', 'high']);
+    && integer(family.olderSiblings, 0, 5) && oneOf(family.means, ['limited', 'moderate', 'high']);
 }
 
 function validDevelopment(value: unknown): boolean {
@@ -89,9 +91,12 @@ function validEvent(event: Record<string, unknown>): boolean {
   switch (event.type) {
     case 'birth': return event.ageInMonths === 0;
     case 'childhood-year': return [12, 24, 36, 48].includes(Number(event.ageInMonths));
+    case 'parent-death': return oneOf(event.role, parentRoles);
+    case 'family-response': return oneOf(event.choice, griefChoices);
     case 'death': return true;
     case 'world': return validWorldId(event.id) && object(event.effects)
       && Object.entries(event.effects).every(([key, value]) => oneOf(key, eventEffects) && integer(value, -100, 100))
+      && (event.country === undefined || oneOf(event.country, countryCodes))
       && (event.person === undefined || oneOf(event.person, closePersonIds));
     case 'plan': return validPlan(event.plan);
     case 'childhood-choice':
@@ -127,14 +132,21 @@ function validLife(value: unknown): value is LifeSnapshot {
   const { ageInMonths, status, wellbeing } = value;
   if (!integer(ageInMonths) || !object(status) || !object(wellbeing)) return false;
   if (!oneOf(status.type, ['active', 'decision', 'dead'])) return false;
+  if (!Array.isArray(value.parents) || value.parents.length > 2 || !value.parents.every((parent) =>
+    object(parent) && oneOf(parent.role, parentRoles) && integer(parent.ageAtBirth, 216, 720)
+    && (parent.diedAt === undefined || integer(parent.diedAt, 1, ageInMonths)))
+    || new Set(value.parents.map((parent) => parent.role)).size !== value.parents.length) return false;
   if (status.type === 'decision') {
-    const decision = status.decision;
-    const milestone = milestoneAt(ageInMonths);
-    if (!(decision === 'first-childhood-activity' && ageInMonths === 48)
-      && !(milestone && decision === milestone)
-      && !(decision === 'school-crisis'
+    const ordinary = (decision: unknown) =>
+      (decision === 'first-childhood-activity' && ageInMonths === 48)
+      || Boolean(milestoneAt(ageInMonths) && decision === milestoneAt(ageInMonths))
+      || (decision === 'school-crisis'
         && ((wellbeing.phase === 'strain' && ageInMonths === 180)
-          || (wellbeing.phase === 'withdrawn' && ageInMonths === 183)))) return false;
+          || (wellbeing.phase === 'withdrawn' && ageInMonths === 183)));
+    if (status.decision === 'family-loss') {
+      if (!value.parents.some((parent) => parent.diedAt === ageInMonths)
+        || (status.resume !== undefined && !ordinary(status.resume))) return false;
+    } else if (!ordinary(status.decision)) return false;
   }
   return validBirth(value.birth) && oneOf(value.countryOfResidence, countryCodes)
     && integer(value.seed, 0, 0xffff_ffff) && integer(value.randomState, 0, 0xffff_ffff)
@@ -147,8 +159,11 @@ function validLife(value: unknown): value is LifeSnapshot {
 export function decodeSave(raw: unknown): SaveRecord {
   if (!object(raw) || !integer(raw.schemaVersion, 1)) throw new InvalidSaveError('corrupt', raw);
 
-  if (raw.schemaVersion !== 1 && raw.schemaVersion !== schemaVersion) throw new InvalidSaveError('version', raw);
-  const life = raw.schemaVersion === 1 && object(raw.life) ? { ...raw.life, diary: [] } : raw.life;
+  if (raw.schemaVersion > schemaVersion) throw new InvalidSaveError('version', raw);
+  let life = raw.life;
+  if (raw.schemaVersion < schemaVersion && object(life) && validBirth(life.birth) && integer(life.seed, 0, 0xffff_ffff)) {
+    life = { ...life, parents: initialParents(life.birth.family, life.seed), ...(raw.schemaVersion === 1 ? { diary: [] } : {}) };
+  }
   if (!integer(raw.revision, 1) || !validLife(life)) throw new InvalidSaveError('corrupt', raw);
   if (life.demographicsVersion !== demographics.version) throw new InvalidSaveError('data', raw);
   return { schemaVersion, revision: raw.revision, life };

@@ -10,15 +10,15 @@ import type { WorldEvent } from './world';
 const newborn = () => startLife(createLife({ name: 'Мира', sex: 'female', seed: 43 }));
 const lastWorld = (life: LifeSnapshot) => life.chronicle.at(-1) as WorldEvent;
 
-it('adds everyday events to most surviving months with deterministic month and year turns', () => {
+it('adds everyday events every two to three months with deterministic month and year turns', () => {
   const life = newborn();
   let monthly = life;
   for (let month = 0; month < 12; month += 1) monthly = advanceMonth(monthly);
   expect(advanceYear(life)).toEqual(monthly);
   const events = monthly.chronicle.filter((event): event is WorldEvent => event.type === 'world');
-  expect(events.length).toBeGreaterThanOrEqual(8);
+  expect(events.length).toBeGreaterThanOrEqual(4);
   expect(new Set(events.map(({ ageInMonths }) => ageInMonths)).size).toBe(events.length);
-  expect(new Set(events.map(({ id }) => id)).size).toBeGreaterThanOrEqual(4);
+  expect(new Set(events.map(({ id }) => id)).size).toBeGreaterThanOrEqual(3);
 });
 
 it('uses the childhood choice when the library reopens and keeps the gameplay random state', () => {
@@ -77,4 +77,14 @@ it('allows a note without advancing time or changing the simulation draw', () =>
   const noted = addDiaryEntry(life, '   Хороший день.  ');
   expect(noted).toEqual({ ...life, diary: [{ ageInMonths: 0, text: 'Хороший день.' }] });
   expect(advanceMonth(noted)).toEqual({ ...advanceMonth(life), diary: noted.diary });
+});
+
+it('uses local rainfall averages to make rainy events more common in a wetter country', () => {
+  const start = newborn();
+  const countRain = (countryOfResidence: 'BR' | 'AU') => Array.from({ length: 800 }, (_, index) => {
+    const life = { ...start, ageInMonths: 250 + index, countryOfResidence };
+    const event = advanceWorld(life).chronicle.at(-1);
+    return event?.type === 'world' && event.id === 'rain' ? event.effects.mood : undefined;
+  }).filter((mood) => mood === -3).length;
+  expect(countRain('BR')).toBeGreaterThan(countRain('AU') * 2);
 });

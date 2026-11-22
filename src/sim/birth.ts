@@ -1,3 +1,4 @@
+import { householdSizes } from '../data/households';
 import { countryForBirthRoll, demographics, sexes } from '../data/demographics';
 import type { CountryCode, Sex } from '../data/demographics';
 import { drawRandom } from './random';
@@ -37,15 +38,22 @@ export function createLife(input: { name: string; sex: Sex; seed: number }): New
   const means = drawRandom(siblings.state);
   const health = drawRandom(means.state);
 
+  const countryOfBirth = countryForBirthRoll(country.value);
+  const [small, medium, large] = householdSizes[countryOfBirth];
+  const draw = siblings.value * (small + medium + large);
+  const caregiversAtBirth: Caregivers = caregivers.value < .72 ? 'two-parents'
+    : caregivers.value < .95 ? 'one-parent' : 'other-guardians';
+  const size = draw < small ? 2 + Math.floor(draw / small * 2)
+    : draw < small + medium ? 4 + Math.floor((draw - small) / medium * 2)
+    : 6 + Math.floor((draw - small - medium) / large * 2);
   return {
     birth: {
       name,
       sex: input.sex,
-      countryOfBirth: countryForBirthRoll(country.value),
+      countryOfBirth,
       family: {
-        caregivers: caregivers.value < 0.72 ? 'two-parents'
-          : caregivers.value < 0.95 ? 'one-parent' : 'other-guardians',
-        olderSiblings: Math.floor(siblings.value * 4),
+        caregivers: caregiversAtBirth,
+        olderSiblings: Math.max(0, size - (caregiversAtBirth === 'two-parents' ? 3 : 2)),
         means: means.value < 0.25 ? 'limited' : means.value < 0.9 ? 'moderate' : 'high',
       },
       startingHealth: health.value < 0.9 ? 'typical' : 'needs-support',

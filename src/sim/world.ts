@@ -1,3 +1,5 @@
+import { yearlyPrecipitation } from '../data/households';
+import type { CountryCode } from '../data/demographics';
 import { countryCodes } from '../data/demographics';
 import type { EventEffect, WorldEventId } from '../data/world-events';
 import type { LifeEvent, LifeSnapshot } from './life';
@@ -10,6 +12,7 @@ export type WorldEvent = {
   readonly id: WorldEventId;
   readonly ageInMonths: number;
   readonly effects: Readonly<Partial<Record<EventEffect, number>>>;
+  readonly country?: CountryCode;
   readonly person?: ClosePersonId;
 };
 
@@ -21,10 +24,8 @@ type EventChoice = {
   readonly contact?: readonly [ClosePersonId, number];
 };
 
-const quietMonthChance = 0.09;
-
 const everyday: readonly EventChoice[] = [
-  { id: 'rain', mood: -2 }, { id: 'market', mood: 1 }, { id: 'power-outage', mood: -2 },
+  { id: 'market', mood: 1 }, { id: 'power-outage', mood: -2 },
   { id: 'evening-out', mood: 2 }, { id: 'unplanned-visit', mood: 2 }, { id: 'quiet-routine', mood: 1 },
 ];
 
@@ -131,6 +132,12 @@ function candidates(life: LifeSnapshot): EventChoice[] {
   return pool;
 }
 
+function rainEvent(life: LifeSnapshot): EventChoice {
+  if (life.development.plan === 'study') return { id: 'rain-study', mood: -1, skill: ['academics', 1] };
+  if (employed(life)) return { id: 'rain-commute', mood: -4 };
+  return { id: 'rain', mood: -3 };
+}
+
 export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   const { ageInMonths, wellbeing, development, relationships } = life;
   const recent = recentEvents(life, 3);
@@ -138,10 +145,15 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   // Ambient events have a separate deterministic draw so they never consume a mortality or action roll.
   const { value } = drawRandom((life.seed ^ Math.imul(ageInMonths, 0x9e3779b9) ^ (residence << 24)) >>> 0);
   const followup = connected(life, recent);
-  if (!followup && value < quietMonthChance) return life;
+  const rhythm = (ageInMonths + life.seed % 5) % 5;
+  if (!followup && rhythm !== 0 && rhythm !== 2) return life;
+  // Annual precipitation is a weighting proxy, not an observed probability of rainy days.
+  const rainChance = yearlyPrecipitation[life.countryOfResidence] / 6500;
+  const wet = ageInMonths >= 48 && value < rainChance ? rainEvent(life) : undefined;
+  const draw = ageInMonths >= 48 && !wet ? (value - rainChance) / (1 - rainChance) : value;
   const blocked = new Set(recent.flatMap((event) => event.type === 'world' ? [event.id] : []));
   const pool = candidates(life).filter(({ id }) => !blocked.has(id));
-  const event = followup ?? pool[Math.floor((value - quietMonthChance) / (1 - quietMonthChance) * pool.length)];
+  const event = followup ?? wet ?? pool[Math.floor(draw * pool.length)];
   if (!event) return life;
 
   const effects: Partial<Record<EventEffect, number>> = {};
@@ -174,7 +186,7 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
     wellbeing: { ...wellbeing, mood },
     relationships: contacts,
     chronicle: [...life.chronicle, {
-      type: 'world', id: event.id, ageInMonths, effects, ...(person ? { person } : {}),
+      type: 'world', id: event.id, ageInMonths, effects, country: life.countryOfResidence, ...(person ? { person } : {}),
     }],
   };
 }

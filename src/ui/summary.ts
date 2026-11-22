@@ -1,9 +1,10 @@
+import { socialCircle } from './journal';
 import { demographics } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
 import type { LifeEvent, LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import { ageLabel, educationLabels, employmentLabels, eventLabel, skillLabels } from './labels';
-import { chronicle, indicatorPanel, metric, relations } from './play';
+import { chronicle, indicatorPanel, metric } from './play';
 
 function countriesLivedIn(life: LifeSnapshot): readonly string[] {
   const countries = new Set<CountryCode>([life.birth.countryOfBirth]);
@@ -18,7 +19,7 @@ function countriesLivedIn(life: LifeSnapshot): readonly string[] {
 
 function keyEvent(event: LifeEvent): boolean {
   return (event.type === 'world' && ['library-return', 'move-welcome', 'shift-cover', 'new-colleague'].includes(event.id))
-    || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
+    || event.type === 'parent-death' || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
     || event.type === 'childhood-choice' || (event.type === 'action' && event.succeeded);
 }
 
@@ -26,7 +27,6 @@ interface SummaryNavigation {
   home: () => void;
   more: () => void;
   openDiary: () => void;
-  openSocial: () => void;
 }
 
 export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNavigation): HTMLElement {
@@ -34,7 +34,6 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
     el('div', 'eyebrow', 'Итог жизни'), heading(life.birth.name),
     el('p', 'location', ageLabel(life.ageInMonths))),
   el('div', 'profile-actions', button('Дневник', navigation.openDiary, 'quiet', 'open-diary'),
-    button('Круг общения', navigation.openSocial, 'quiet', 'open-social'),
     button('Меню', navigation.home, 'quiet', 'menu')));
   const overview = panel('Прожитая жизнь', facts([
     ['Возраст', ageLabel(life.ageInMonths)],
@@ -49,5 +48,5 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
     el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), el('span', '', eventLabel(event))))));
   return el('div', '', profile, el('div', 'grid',
     el('div', 'stack', overview, milestones, chronicle(life, limit, navigation.more)),
-    el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), relations(life))));
+    el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), socialCircle(life))));
 }
