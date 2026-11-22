@@ -90,3 +90,33 @@ summary { cursor: pointer; }
 @media (max-width: 25rem) {
   .chronicle li { grid-template-columns: 1fr; gap: .05rem; }
 }
+
+/* Give the current decision and its consequences priority over the profile. */
+.turn-options, .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+button.choice-card {
+  display: grid; align-content: start; gap: .35rem; text-align: left;
+  padding: .9rem 1rem; font-weight: 700; overflow-wrap: anywhere;
+}
+.choice-description, .helper { color: var(--muted); font-weight: 400; }
+.choice-description { font-size: .925rem; line-height: 1.45; }
+.primary .choice-description { color: #31412b; }
+.plan-block { display: grid; justify-items: start; gap: .65rem; border-block: 1px solid var(--line); padding-block: .9rem; }
+.plan-block button:disabled { opacity: .55; cursor: default; border-color: var(--line); }
+.pause-label { color: #f5ce83; font-size: .9rem; font-weight: 700; }
+.decision { border-color: #ad8850; }
+.chance-factors { margin-block: 0; padding-inline-start: 1.2rem; }
+.notice.result:not(:empty) { margin-top: 1rem; }
+.notice.result:not(:empty) + main { margin-top: 1rem; }
+.turn-result { border-left: .2rem solid var(--accent); padding: .5rem .75rem; background: #1a2a26; }
+@media (max-width: 40rem) {
+  .turn-options, .choice-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  button { transition: background-color 140ms ease, border-color 140ms ease, transform 120ms ease; }
+  button:not(:disabled):active { transform: translateY(1px); }
+  .turn-result, .decision, .preview { animation: reveal 180ms ease-out both; }
+  @keyframes reveal {
+    from { opacity: .65; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

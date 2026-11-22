@@ -13,6 +13,7 @@ import {
   ageLabel, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
   peopleLabels, phaseLabels, planLabels, skillLabels,
 } from './labels';
+import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
 import { portrait } from './portrait';
 
 export function metric(label: string, value: number): HTMLElement {
@@ -60,59 +61,114 @@ interface PlayHandlers {
   more: () => void;
 }
 
+const percent = new Intl.NumberFormat('ru', { style: 'percent', maximumFractionDigits: 1 });
+
+function choiceCard(label: string, details: string, click: () => void, id: string, primary = false): HTMLElement {
+  const description = el('span', 'choice-description', details);
+  description.id = `${id}-description`;
+  const control = button(label, click, primary ? 'choice-card primary' : 'choice-card', id);
+  control.setAttribute('aria-describedby', description.id);
+  control.setAttribute('aria-label', label);
+  control.append(description);
+  return control;
+}
+
+function planControl(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLElement {
+  const select = el('select');
+  select.id = 'life-plan';
+  select.append(new Option('Без плана', ''), ...plans.map((id) => new Option(planLabels[id], id)));
+  const current = life.development.plan;
+  select.value = current ?? '';
+  const description = el('p', 'helper');
+  description.id = 'plan-description';
+  description.setAttribute('aria-live', 'polite');
+  select.setAttribute('aria-describedby', description.id);
+  const save = button('Применить план', () => commit(setPlan(life, (select.value || null) as Plan | null)),
+    'quiet', 'apply-plan');
+  const update = () => {
+    const choice = (select.value || null) as Plan | null;
+    description.textContent = choice ? planEffects[choice] : 'Герой будет проживать месяцы без выбранного занятия.';
+    save.disabled = choice === current;
+  };
+  update();
+  select.addEventListener('change', update);
+  return el('div', 'plan-block', el('h3', '', 'Что герой делает каждый месяц'),
+    el('p', 'helper', current ? `Текущий план — ${planLabels[current]}.` : 'Текущий план — без плана.'),
+    el('label', 'field plan', 'Выбрать план', select), description, save);
+}
+
+function actionEffect(option: ActionOption): string {
+  if (option.action.id === 'move') return `Сменит страну проживания за ${option.cost} ед. достатка.`;
+  return actionEffects[option.action.id];
+}
+
+function actionPreview(life: LifeSnapshot, selected: ActionOption, handlers: PlayHandlers): HTMLElement {
+  const title = el('h2', '', selected.label);
+  title.id = 'action-preview';
+  title.tabIndex = -1;
+  const preview = el('section', 'panel preview', title, el('p', '', actionEffect(selected)));
+  if (selected.chance < 1) {
+    preview.append(el('h3', '', `Шанс в симуляции — ${percent.format(selected.chance)}`),
+      el('ul', 'chance-factors', ...selected.factors.map(({ label, contribution }) => el('li', '',
+        `${label} · ${percent.format(contribution)}`))));
+  }
+  const actionId = selected.action.id;
+  if (actionId === 'apply-university' || actionId === 'specialist-job') {
+    preview.append(el('p', 'helper', riskEffects[actionId]));
+  }
+  preview.append(el('p', 'helper', 'Действие произойдёт сразу. Возраст изменится только после хода.'),
+    el('div', 'turns',
+      button('К вариантам', () => handlers.preview(null), 'quiet', 'cancel-action'),
+      button('Подтвердить', () => handlers.commit(resolveAction(life, selected.action)), 'primary', 'confirm-action')));
+  preview.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') handlers.preview(null);
+  });
+  return preview;
+}
+
 function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: PlayHandlers): HTMLElement {
+  if (selected) return actionPreview(life, selected, handlers);
+
   const { status } = life;
   const options = availableActions(life);
   const ongoing = status.type === 'active';
-  const section = panel(status.type === 'decision' ? decisionLabels[status.decision] : 'Следующий ход');
+  const section = panel(status.type === 'decision' ? decisionLabels[status.decision] : 'Продвинуть время');
+  const title = section.querySelector('h2')!;
+  title.id = 'turn-title';
+  title.tabIndex = -1;
   if (ongoing) {
-    section.append(el('div', 'turns',
-      button('Прожить месяц', () => handlers.commit(advanceMonth(life)), 'quiet', 'month'),
-      button('Прожить год', () => handlers.commit(advanceYear(life)), 'primary', 'year')));
-    if (life.ageInMonths >= 48) {
-      const select = el('select');
-      select.id = 'life-plan';
-      select.append(new Option('Без плана', ''), ...plans.map((id) => new Option(planLabels[id], id)));
-      select.value = life.development.plan ?? '';
-      select.addEventListener('change', () => handlers.commit(setPlan(life, (select.value || null) as Plan | null)));
-      section.append(el('label', 'field plan', 'План на месяцы', select));
+    section.append(el('div', 'turn-options',
+      choiceCard('Прожить месяц', 'Один шаг вперёд. Удобно, если вы хотите менять план по ходу жизни.',
+        () => handlers.commit(advanceMonth(life)), 'month'),
+      choiceCard('Прожить год', 'До 12 месяцев. Важный выбор или смерть остановят ход раньше.',
+        () => handlers.commit(advanceYear(life)), 'year', true)));
+    if (life.ageInMonths < 48) {
+      section.append(el('p', 'helper', 'В раннем детстве события попадают в хронику. Первое решение появится в четыре года.'));
+    } else {
+      section.append(planControl(life, handlers.commit));
     }
-  } else {
-    section.append(el('p', 'status-text', 'Время на паузе. Выберите, что делать дальше.'));
-    if (status.type === 'decision' && status.decision === 'school-crisis') {
-      section.append(el('p', '', eventLabel(life.chronicle.at(-1)!)));
-    }
+  } else if (status.type === 'decision') {
+    section.classList.add('decision');
+    section.prepend(el('p', 'pause-label', 'Время на паузе'));
+    if (status.decision === 'school-crisis') section.append(el('p', '', eventLabel(life.chronicle.at(-1)!)));
+    section.append(el('p', 'helper', decisionContext[status.decision]));
   }
 
-  const first = availableChildhoodChoices(life).map((id) =>
-    button(childhoodLabels[id], () => handlers.commit(resolveChildhoodChoice(life, id)), 'quiet', id));
-  const crisis = availableCrisisChoices(life).map(({ id, label }) =>
-    button(label, () => handlers.commit(resolveCrisisChoice(life, id)), 'quiet', id));
-  if (first.length || crisis.length) section.append(el('div', 'option-list', ...first, ...crisis));
+  const first = availableChildhoodChoices(life).map((id) => choiceCard(childhoodLabels[id], childhoodEffects[id],
+    () => handlers.commit(resolveChildhoodChoice(life, id)), id));
+  const crisis = availableCrisisChoices(life).map(({ id, label }) => choiceCard(label, crisisEffects[id],
+    () => handlers.commit(resolveCrisisChoice(life, id)), id));
+  if (first.length || crisis.length) section.append(el('div', 'choice-grid', ...first, ...crisis));
   if (options.length) {
-    if (ongoing) section.append(el('h3', '', 'Действия'));
+    if (ongoing) section.append(el('h3', '', 'Что можно сделать сейчас'));
+    section.append(el('p', 'helper', 'Откройте вариант, чтобы увидеть условия и подтвердить действие.'));
     const actions = options.map((option) => {
       const id = option.action.id === 'move' ? option.action.destination : option.action.id;
-      return button(option.label, () => handlers.preview(option), 'quiet', `action-${id}`);
+      const chance = option.chance < 1 ? ` · Шанс ${percent.format(option.chance)}` : '';
+      return choiceCard(option.label, actionEffect(option) + chance,
+        () => handlers.preview(option), `action-${id}`);
     });
-    section.append(el('div', 'option-list', ...actions));
-  }
-  if (selected) {
-    const percent = new Intl.NumberFormat('ru', { style: 'percent', maximumFractionDigits: 1 });
-    const title = el('h3', '', selected.label);
-    title.id = 'action-preview';
-    title.tabIndex = -1;
-    const preview = el('section', 'preview', title);
-    if (selected.chance < 1) {
-      preview.append(el('p', '', `Шанс в симуляции — ${percent.format(selected.chance)}`),
-        el('ul', '', ...selected.factors.map(({ label, contribution }) => el('li', '',
-          `${label} · ${percent.format(contribution)}`))));
-    }
-    if (selected.cost) preview.append(el('p', '', `Стоимость — ${selected.cost} ед. достатка`));
-    preview.append(el('div', 'turns',
-      button('Отмена', () => handlers.preview(null), 'quiet', 'cancel-action'),
-      button('Подтвердить', () => handlers.commit(resolveAction(life, selected.action)), 'primary', 'confirm-action')));
-    section.prepend(preview);
+    section.append(el('div', 'choice-grid', ...actions));
   }
   return section;
 }

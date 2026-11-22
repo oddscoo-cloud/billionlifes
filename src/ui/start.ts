@@ -16,9 +16,14 @@ export function startScreen(
   if (life) actions.append(button(life.status.type === 'dead' ? 'Открыть итог жизни' : 'Продолжить жизнь',
     resume, 'primary', 'resume'));
   actions.append(button('Новая жизнь', birth, life ? 'quiet' : 'primary', 'new-life'));
-  const saved = life ? el('p', 'saved', `Сохранено · ${life.birth.name} · ${ageLabel(life.ageInMonths)}`) : null;
-  return intro(title, el('p', 'lede', 'От рождения до последнего дня. Выбирайте, чему учиться, с кем сближаться и куда переехать.'), actions,
-    ...(saved ? [saved] : []));
+  if (life) {
+    const hint = el('p', 'helper', 'Новая жизнь откроет анкету. Чтобы заменить сохранение, нужно подтвердить замену.');
+    const saved = el('p', 'saved', `Сохранено · ${life.birth.name} · ${ageLabel(life.ageInMonths)}`);
+    return intro(title, saved, actions, hint);
+  }
+  return intro(title,
+    el('p', 'lede', 'Создайте героя, проживайте месяцы или годы и принимайте решения по мере взросления. Игра сохраняет каждый ход.'),
+    actions);
 }
 
 export function birthScreen(

@@ -6,6 +6,7 @@ import { InvalidSaveError } from './storage/schema';
 import { openSaves, SaveConflictError } from './storage/saves';
 import { LifeSession } from './storage/session';
 import { button, el, panel } from './ui/elements';
+import { turnFeedback } from './ui/feedback';
 import { play } from './ui/play';
 import { birthScreen, startScreen } from './ui/start';
 import { summary } from './ui/summary';
@@ -80,18 +81,20 @@ function mount(session: LifeSession): void {
     const previousFocus = document.activeElement?.id ?? '';
     busy = true;
     app.inert = true;
+    notice.classList.remove('result');
     notice.replaceChildren('Сохранение…');
     try {
       await session.commit(next);
       selected = null;
       screen = 'play';
-      notice.replaceChildren('Сохранено');
-      const focus = previous?.status.type === 'active' && next.status.type === 'active' ? previousFocus : '';
+      const result = el('p', 'turn-result', turnFeedback(previous, next));
+      notice.replaceChildren(result);
+      notice.classList.add('result');
+      const focus = next.status.type === 'decision' ? 'turn-title'
+        : previous?.status.type === 'active' && next.status.type === 'active' ? previousFocus : '';
       app.inert = false;
-      render(focus || 'screen-title');
+      render(focus === 'apply-plan' ? 'life-plan' : focus || 'screen-title');
     } catch (error) {
-      const plan = app.querySelector<HTMLSelectElement>('#life-plan');
-      if (plan) plan.value = previous?.development.plan ?? '';
       if (error instanceof SaveConflictError) {
         const reload = button('Загрузить актуальную жизнь', () => location.reload(), 'quiet');
         notice.replaceChildren('Другая вкладка обновила сохранение. ', reload);
