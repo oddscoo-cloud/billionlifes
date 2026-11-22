@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { availableCrisisChoices, resolveCrisisChoice } from './crisis';
+import { advanceWellbeing, availableCrisisChoices, resolveCrisisChoice } from './crisis';
 import { createLife } from './birth';
 import { advanceMonth, advanceYear, resolveChildhoodChoice, startLife } from './life';
 import type { ChildhoodChoice, LifeSnapshot } from './life';
@@ -41,4 +41,25 @@ it('allows postponement, followed by gradual withdrawal and a change of environm
   const healing = resolveCrisisChoice(followup, 'change-group');
   expect(advanceMonth(healing).wellbeing.phase).toBe('recovering');
   expect(advanceYear(healing).wellbeing.phase).toBe('resolved');
+});
+
+it('turns accumulated loss into a mental health pause and offers a recovery path', () => {
+  const life = startLife(createLife({ name: 'Илья', sex: 'male', seed: 11 }));
+  const stressed: LifeSnapshot = {
+    ...life,
+    ageInMonths: 240,
+    chronicle: [
+      ...life.chronicle,
+      { type: 'parent-death', role: 'mother', ageInMonths: 230 },
+      { type: 'crisis', ageInMonths: 235, message: 'Стало трудно справляться.' },
+    ],
+  };
+  const paused = advanceWellbeing(stressed);
+  expect(paused.status).toEqual({ type: 'decision', decision: 'mental-health' });
+  expect(paused.wellbeing.mentalHealth?.condition).toBe('anxiety');
+
+  const supported = resolveCrisisChoice(paused, 'seek-care');
+  expect(supported.status).toEqual({ type: 'active' });
+  expect(supported.wellbeing.mentalHealth).toMatchObject({ condition: 'recovering', supported: true });
+  expect(supported.chronicle.at(-1)).toMatchObject({ type: 'crisis' });
 });

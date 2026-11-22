@@ -22,6 +22,7 @@ export const decisionLabels: Record<Extract<LifeStatus, { type: 'decision' }>['d
   'turning-point': 'Трудный выбор',
   'family-loss': 'Потеря близкого',
   'school-crisis': 'Трудности в учебной группе',
+  'mental-health': 'Состояние психического здоровья',
 };
 
 export const educationLabels = {
@@ -38,6 +39,13 @@ export const peopleLabels = { caregiver: 'Опекун', friend: 'Друг де�
 export const phaseLabels = {
   none: 'Стабильное состояние', strain: 'Трудности в группе', withdrawn: 'Замкнутость',
   recovering: 'Восстановление', resolved: 'Кризис пройден',
+};
+export const mentalHealthLabels = {
+  none: 'Стабильное состояние',
+  anxiety: 'Тревожное состояние',
+  depression: 'Депрессивное состояние',
+  burnout: 'Истощение',
+  recovering: 'Восстановление',
 };
 
 export function ageLabel(months: number): string {

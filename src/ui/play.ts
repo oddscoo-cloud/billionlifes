@@ -27,7 +27,7 @@ import type { LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import {
   ageLabel, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
-  peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
+  mentalHealthLabels, peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
 import { innerVoice } from '../sim/inner-voice';
@@ -233,7 +233,7 @@ function controls(life: LifeSnapshot, selected: ActionOption | null, handlers: P
   } else if (status.type === 'decision') {
     section.classList.add('decision');
     section.prepend(el('p', 'pause-label', 'Время на паузе'));
-    if (status.decision === 'school-crisis') {
+    if (status.decision === 'school-crisis' || status.decision === 'mental-health') {
       const event = life.chronicle.slice(-8).reverse().find(({ type }) => type === 'crisis');
       if (event) section.append(el('p', '', eventLabel(event)));
     }
@@ -290,6 +290,9 @@ function wellbeingPanel(life: LifeSnapshot, commit: PlayHandlers['commit']): HTM
   const section = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
     metric('Настроение', life.wellbeing.mood), facts([['Здоровье', health.label]]),
     el('p', 'helper', health.detail));
+  const mental = life.wellbeing.mentalHealth ?? { condition: 'none' as const, severity: 0 as const };
+  section.append(facts([['Психическое состояние', mentalHealthLabels[mental.condition]],
+    ...(mental.condition !== 'none' ? [['Сила состояния', mental.severity] as const] : [])]));
   if (life.ageInMonths < 18 * 12) return section;
   if (!current) {
     section.append(facts([['Романтика', 'Пока нет']]));

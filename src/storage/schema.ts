@@ -163,7 +163,9 @@ function validLife(value: unknown): value is LifeSnapshot {
       || Boolean(milestoneAt(ageInMonths) && decision === milestoneAt(ageInMonths))
       || (decision === 'school-crisis'
         && ((wellbeing.phase === 'strain' && ageInMonths === 180)
-          || (wellbeing.phase === 'withdrawn' && ageInMonths === 183)));
+          || (wellbeing.phase === 'withdrawn' && ageInMonths === 183)))
+      || (decision === 'mental-health' && Array.isArray(value.chronicle)
+        && value.chronicle.some((event) => object(event) && event.type === 'crisis' && event.ageInMonths === ageInMonths));
     if (status.decision === 'family-loss') {
       const siblingDied = Array.isArray(value.chronicle) && value.chronicle.some((event) =>
         object(event) && event.type === 'sibling-death' && event.ageInMonths === ageInMonths);
@@ -180,7 +182,13 @@ function validLife(value: unknown): value is LifeSnapshot {
     && validDevelopment(value.development) && validRelationships(value.relationships, ageInMonths)
     && integer(wellbeing.mood, 0, 100) && integer(wellbeing.monthsInPhase, 0, ageInMonths)
     && oneOf(wellbeing.phase, ['none', 'strain', 'withdrawn', 'recovering', 'resolved'])
-    && typeof wellbeing.support === 'boolean' && validDiary(value.diary, ageInMonths) && validChronicle(value.chronicle, ageInMonths, status.type, value.birth.family.olderSiblings);
+    && typeof wellbeing.support === 'boolean'
+    && (wellbeing.mentalHealth === undefined || (object(wellbeing.mentalHealth)
+      && oneOf(wellbeing.mentalHealth.condition, ['none', 'anxiety', 'depression', 'burnout', 'recovering'])
+      && integer(wellbeing.mentalHealth.severity, 0, 3)
+      && integer(wellbeing.mentalHealth.months, 0, ageInMonths)
+      && typeof wellbeing.mentalHealth.supported === 'boolean'))
+    && validDiary(value.diary, ageInMonths) && validChronicle(value.chronicle, ageInMonths, status.type, value.birth.family.olderSiblings);
 }
 
 export function decodeSave(raw: unknown): SaveRecord {
@@ -194,6 +202,12 @@ export function decodeSave(raw: unknown): SaveRecord {
   if (raw.schemaVersion < schemaVersion && object(life) && object(life.development)) {
     const { character: _obsolete, ...development } = life.development;
     life = { ...life, development };
+  }
+  if (object(life) && object(life.wellbeing) && life.wellbeing.mentalHealth === undefined) {
+    life = {
+      ...life,
+      wellbeing: { ...life.wellbeing, mentalHealth: { condition: 'none', severity: 0, months: 0, supported: false } },
+    };
   }
   if (!integer(raw.revision, 1) || !validLife(life)) throw new InvalidSaveError('corrupt', raw);
   if (life.demographicsVersion !== demographics.version) throw new InvalidSaveError('data', raw);
