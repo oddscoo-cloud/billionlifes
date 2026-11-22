@@ -3,7 +3,7 @@ export type ClosePersonId = (typeof closePersonIds)[number];
 
 export interface Memory {
   readonly ageInMonths: number;
-  readonly kind: 'shared-reading' | 'shared-play' | 'club' | 'volunteering' | 'asked-for-help' | 'spent-time';
+  readonly kind: 'shared-reading' | 'shared-play' | 'club' | 'volunteering' | 'asked-for-help';
 }
 
 export interface Relationship {

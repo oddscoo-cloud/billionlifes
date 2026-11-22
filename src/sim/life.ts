@@ -3,6 +3,8 @@ import type { CountryCode } from '../data/demographics';
 import { milestoneAt } from './actions';
 import type { LifeAction, Milestone } from './actions';
 import type { NewLife } from './birth';
+import { advanceWellbeing } from './crisis';
+import type { CrisisChoice, Wellbeing } from './crisis';
 import { grow, growMonth, initialDevelopment, plans } from './growth';
 import type { Development, Plan } from './growth';
 import { initialRelationships, remember } from './relationships';
@@ -21,13 +23,14 @@ export type LifeEvent = {
       readonly succeeded: boolean;
       readonly chance: number;
     }
+  | { readonly type: 'crisis'; readonly message: string; readonly choice?: CrisisChoice }
   | { readonly type: 'plan'; readonly plan: Plan | null }
   | { readonly type: 'childhood-choice'; readonly choice: ChildhoodChoice }
 );
 
 export type LifeStatus =
   | { readonly type: 'active' }
-  | { readonly type: 'decision'; readonly decision: 'first-childhood-activity' | Milestone }
+  | { readonly type: 'decision'; readonly decision: 'first-childhood-activity' | 'school-crisis' | Milestone }
   | { readonly type: 'dead' };
 
 export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
@@ -35,6 +38,7 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
   readonly countryOfResidence: CountryCode;
   readonly status: LifeStatus;
   readonly development: Development;
+  readonly wellbeing: Wellbeing;
   readonly relationships: readonly Relationship[];
   readonly chronicle: readonly LifeEvent[];
 }
@@ -42,6 +46,7 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
 export function startLife(newLife: NewLife): LifeSnapshot {
   return {
     ...newLife,
+    wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false },
     relationships: initialRelationships(),
     development: initialDevelopment(newLife.birth.family.means),
     countryOfResidence: newLife.birth.countryOfBirth,
@@ -78,11 +83,11 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
 
   const development = growMonth(life.development);
   const milestone = milestoneAt(ageInMonths);
-  return {
+  return advanceWellbeing({
     ...next,
     development,
     status: milestone ? { type: 'decision', decision: milestone } : next.status,
-  };
+  });
 }
 
 export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {
