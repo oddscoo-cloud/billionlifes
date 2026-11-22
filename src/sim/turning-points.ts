@@ -167,6 +167,42 @@ export const turningPoints = {
         followup: 'Общий круг стал меньше, но отдельные дружеские связи сохранились.', later: [3, 0], trait: 'supportive' },
     ],
   },
+  'friend-betrayal': {
+    title: 'Доверие оказалось нарушено',
+    story: 'Друг рассказал другим то, чем герой делился только наедине. Теперь нужно решить, как жить с этой обидой и границами.',
+    responses: [
+      { label: 'Поговорить прямо', hint: 'Разговор может закончиться болезненно, но поможет понять, можно ли восстановить доверие.',
+        outcome: 'Герой спокойно объяснил, почему это было больно, и выслушал ответ.', immediate: [-5, 0],
+        followup: 'Извинения не отменили случившееся, но между ними появились более честные границы.', later: [4, 0], trait: 'open' },
+      { label: 'Отдалиться', hint: 'Станет одиноко, зато появится пространство для безопасности и новых связей.',
+        outcome: 'Герой перестал делиться личным и оставил отношения на расстоянии.', immediate: [-2, 0],
+        followup: 'Со временем стало спокойнее. Не всякая близость обязана продолжаться.', later: [3, 0], trait: 'careful' },
+    ],
+  },
+  'family-financial-crisis': {
+    title: 'Денег стало не хватать',
+    story: 'Доходов семьи оказалось недостаточно для привычных расходов. Несколько решений придётся принимать в условиях постоянной тревоги.',
+    responses: [
+      { label: 'Попросить помощи у близких', hint: 'Придётся признаться, что самостоятельно не справиться. Поддержка уменьшит ближайшее давление.',
+        outcome: 'Герой честно рассказал о положении и попросил о временной помощи.', immediate: [-3, 3],
+        followup: 'Помощь не решила все проблемы, но позволила пережить самый острый период.', later: [5, 0], trait: 'open' },
+      { label: 'Сократить всё необязательное', hint: 'Запас сохранится, но несколько месяцев жизнь будет заметно теснее.',
+        outcome: 'Герой пересмотрел расходы и отказался от части привычных вещей.', immediate: [-5, 0],
+        followup: 'Новый бюджет оказался строгим, зато дал ощущение, что ситуация снова под контролем.', later: [4, 1], trait: 'resourceful' },
+    ],
+  },
+  'serious-illness-in-family': {
+    title: 'Близкий серьёзно заболел',
+    story: 'Кому-то из семьи понадобились обследования и помощь в повседневных делах. Будущее стало неопределённым.',
+    responses: [
+      { label: 'Взять заботу на себя', hint: 'Своих сил станет меньше, но близкий не останется один.',
+        outcome: 'Герой перестроил распорядок и взял на себя часть заботы.', immediate: [-7, 0],
+        followup: 'Болезнь не исчезла сразу, но близкий знал: рядом есть человек, которому можно доверять.', later: [7, 0], trait: 'supportive' },
+      { label: 'Организовать помощь вместе', hint: 'Придётся просить других и координировать дела, зато нагрузка не ляжет на одного человека.',
+        outcome: 'Герой собрал родственников и знакомых и распределил помощь.', immediate: [-4, 0],
+        followup: 'Забота стала общей. Было трудно, но никто не нёс всё в одиночку.', later: [6, 0], trait: 'resourceful' },
+    ],
+  },
 } as const satisfies Record<string, Scenario>;
 
 export type TurningPointId = keyof typeof turningPoints;
@@ -189,6 +225,9 @@ export function advanceTurningPoint(life: LifeSnapshot): LifeSnapshot {
   if (age < 22 * 12 && hasFriend) candidates.push('friend-conflict');
   if (age >= 18 * 12 && life.development.funds >= 3) candidates.push('unexpected-expense');
   if (age >= 18 * 12 && employed) candidates.push('lost-job');
+  if (age >= 18 * 12 && hasFriend) candidates.push('friend-betrayal');
+  if (age >= 18 * 12 && life.development.funds <= 2) candidates.push('family-financial-crisis');
+  if (age >= 25 * 12 && life.parents.some(({ diedAt }) => diedAt === undefined)) candidates.push('serious-illness-in-family');
   if (age >= 65 * 12) candidates.push('changing-routine');
   if (recentWorld.some((event) => event.type === 'world' && event.id === 'move-paperwork' && event.ageInMonths === age - 2)) {
     candidates.push('unfamiliar-city');

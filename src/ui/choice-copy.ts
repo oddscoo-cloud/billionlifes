@@ -19,6 +19,9 @@ export const crisisEffects: Record<CrisisChoice, string> = {
   'ask-for-help': 'Разговор с близкими улучшит настроение и запустит восстановление.',
   wait: 'Можно дать себе время. Если трудности сохранятся, через три месяца придётся выбрать снова.',
   'change-group': 'Смена окружения запустит постепенное восстановление.',
+  'seek-care': 'Профессиональная помощь даст план восстановления. Это не мгновенное решение, но состояние может постепенно измениться.',
+  'ask-for-support': 'Честный разговор с близким человеком уменьшит одиночество и укрепит связь.',
+  'rest-and-routine': 'Снижение нагрузки и сон помогут восстановить силы, если дать себе время.',
 };
 
 export const decisionContext: Record<Extract<LifeStatus, { type: 'decision' }>['decision'], string> = {
@@ -29,6 +32,7 @@ export const decisionContext: Record<Extract<LifeStatus, { type: 'decision' }>['
   'turning-point': 'У каждого решения будут последствия.',
   'family-loss': 'Выберите, как герой переживёт потерю близкого.',
   'school-crisis': 'Выберите, как герой справится с трудностями в группе.',
+  'mental-health': 'Состояние длится достаточно долго, чтобы попросить помощи. Выберите первый шаг, а не идеальное решение.',
 };
 
 export const actionEffects: Record<Activity, string> = {

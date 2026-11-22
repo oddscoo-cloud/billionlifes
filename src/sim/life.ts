@@ -12,7 +12,7 @@ import { milestoneAt } from './actions';
 import type { LifeAction, Milestone } from './actions';
 import type { NewLife } from './birth';
 import { advanceWellbeing } from './crisis';
-import type { CrisisChoice, Wellbeing } from './crisis';
+import type { CrisisChoice, MentalHealth, Wellbeing } from './crisis';
 import type { DiaryEntry } from './diary';
 import { advanceWorld } from './world';
 import type { WorldEvent } from './world';
@@ -48,7 +48,7 @@ export type LifeEvent = WorldEvent | ({
   | { readonly type: 'childhood-choice'; readonly choice: ChildhoodChoice }
 ));
 
-export type Decision = 'first-childhood-activity' | 'school-crisis' | Milestone;
+export type Decision = 'first-childhood-activity' | 'school-crisis' | 'mental-health' | Milestone;
 export type LifeStatus =
   | { readonly type: 'active' }
   | { readonly type: 'decision'; readonly decision: Decision }
@@ -73,7 +73,8 @@ export function startLife(newLife: NewLife): LifeSnapshot {
     ...newLife,
     diary: [],
     parents: initialParents(newLife.birth.family, newLife.seed),
-    wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false },
+    wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false,
+      mentalHealth: { condition: 'none', severity: 0, months: 0, supported: false } satisfies MentalHealth },
     relationships: initialRelationships(),
     development: initialDevelopment(newLife.birth.family.means),
     countryOfResidence: newLife.birth.countryOfBirth,
