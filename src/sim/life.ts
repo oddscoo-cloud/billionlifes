@@ -5,6 +5,8 @@ import type { LifeAction, Milestone } from './actions';
 import type { NewLife } from './birth';
 import { grow, growMonth, initialDevelopment, plans } from './growth';
 import type { Development, Plan } from './growth';
+import { initialRelationships, remember } from './relationships';
+import type { Relationship } from './relationships';
 import { drawRandom } from './random';
 
 export type ChildhoodChoice = 'read-with-caregiver' | 'play-with-peers';
@@ -33,12 +35,14 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
   readonly countryOfResidence: CountryCode;
   readonly status: LifeStatus;
   readonly development: Development;
+  readonly relationships: readonly Relationship[];
   readonly chronicle: readonly LifeEvent[];
 }
 
 export function startLife(newLife: NewLife): LifeSnapshot {
   return {
     ...newLife,
+    relationships: initialRelationships(),
     development: initialDevelopment(newLife.birth.family.means),
     countryOfResidence: newLife.birth.countryOfBirth,
     status: { type: 'active' },
@@ -92,6 +96,9 @@ export function resolveChildhoodChoice(life: LifeSnapshot, choice: ChildhoodChoi
   return {
     ...life,
     status: { type: 'active' },
+    relationships: choice === 'read-with-caregiver'
+      ? remember(life.relationships, 'caregiver', { kind: 'shared-reading', ageInMonths: life.ageInMonths }, 15)
+      : remember(life.relationships, 'friend', { kind: 'shared-play', ageInMonths: life.ageInMonths }, 15),
     development: grow(life.development, choice === 'read-with-caregiver' ? 'study' : 'community', 3),
     chronicle: [...life.chronicle, { type: 'childhood-choice', ageInMonths: life.ageInMonths, choice }],
   };

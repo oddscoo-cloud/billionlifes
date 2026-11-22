@@ -3,6 +3,7 @@ import type { CountryCode } from '../data/demographics';
 import { grow } from './growth';
 import type { Development, Plan } from './growth';
 import type { LifeSnapshot } from './life';
+import { remember } from './relationships';
 import { drawRandom } from './random';
 
 export type Milestone = 'teen-activity' | 'adult-path' | 'later-life';
@@ -168,8 +169,14 @@ export function resolveAction(life: LifeSnapshot, action: LifeAction): LifeSnaps
     ? { ...outcome.development, nextAdmissionAge: life.ageInMonths + 3 }
     : outcome.development;
 
+  const memory = action.id === 'school-club' ? 'club' : action.id === 'volunteer' ? 'volunteering' : null;
+  const relationships = succeeded && memory
+    ? remember(life.relationships, 'friend', { kind: memory, ageInMonths: life.ageInMonths }, 10)
+    : life.relationships;
+
   return {
     ...life,
+    relationships,
     development,
     countryOfResidence: outcome.countryOfResidence,
     randomState: roll?.state ?? life.randomState,
