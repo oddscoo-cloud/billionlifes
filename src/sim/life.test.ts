@@ -69,7 +69,7 @@ describe('life progression', () => {
     expect(dead).toEqual(advanceMonth(start));
     expect(dead.ageInMonths).toBe(1);
     expect(dead.status.type).toBe('dead');
-    expect(dead.chronicle.at(-1)).toEqual({ type: 'death', ageInMonths: 1 });
+    expect(dead.chronicle.at(-1)).toMatchObject({ type: 'death', ageInMonths: 1 });
     expect(advanceMonth(dead)).toBe(dead);
     expect(advanceYear(dead)).toBe(dead);
     expect(resolveChildhoodChoice(dead, 'play-with-peers')).toBe(dead);
@@ -81,7 +81,7 @@ describe('life progression', () => {
     const risk = monthlyMortality(life.countryOfResidence, life.birth.sex, 47);
     const dead = advanceMonth({ ...life, ageInMonths: 47, randomState: stateForRoll(0, risk) });
     expect(dead.status.type).toBe('dead');
-    expect(dead.chronicle.slice(1)).toEqual([{ type: 'death', ageInMonths: 48 }]);
+    expect(dead.chronicle.slice(1)).toMatchObject([{ type: 'death', ageInMonths: 48 }]);
   });
 
   it('applies the open-band risk beyond age 100', () => {

@@ -1,3 +1,4 @@
+import { deathCauses, finalCause } from '../sim/death-causes';
 import { characterTraits, traitLabels } from '../sim/traits';
 import { turningPoints } from '../sim/turning-points';
 import type { LifeSnapshot } from '../sim/life';
@@ -16,7 +17,7 @@ export function turnFeedback(previous: LifeSnapshot | undefined, next: LifeSnaps
   const monthDelta = next.ageInMonths - previous.ageInMonths;
   const event = next.chronicle.length > previous.chronicle.length ? next.chronicle.at(-1) : undefined;
   if (next.status.type === 'dead') {
-    return `Ход завершился в возрасте ${ageLabel(next.ageInMonths)}. Открыта итоговая сводка жизни.`;
+    return `Ход завершился в возрасте ${ageLabel(next.ageInMonths)}. Причина смерти — ${deathCauses[finalCause(next)][0].toLowerCase()}.`;
   }
   if (monthDelta === 0 && event?.type === 'family-response') return `${eventLabel(event)}.`;
   if (next.status.type === 'decision') {

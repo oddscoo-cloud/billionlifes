@@ -160,25 +160,25 @@ function mount(session: LifeSession): void {
     if (screen === 'birth') {
       app.replaceChildren(birthScreen(life, () => setScreen('home'), (name, sex) => {
         const seed = crypto.getRandomValues(new Uint32Array(1))[0]!;
-        void commit(startLife(createLife({ name, sex, seed })));
-      }));
+        return startLife(createLife({ name, sex, seed }));
+      }, (draft) => void commit(draft)));
     } else if (screen === 'diary' && life) {
       app.replaceChildren(diary(life, () => setScreen('play', 'open-diary'),
         (text) => void commit(addDiaryEntry(life, text), 'diary')));
     } else if (screen === 'play' && life) {
-      const stats = quiet && app.querySelector('.show-indicators') !== null;
+      const mobilePanel = quiet && app.querySelector<HTMLElement>('.dashboard-grid')?.dataset.mobilePanel;
       const panels = ['.workspace', '.timeline', '.indicators'];
       const scroll = quiet ? panels.map((selector) => app.querySelector(selector)?.scrollTop ?? 0) : [];
       const expanded = quiet && app.querySelector('.social-details[open]') !== null;
       const home = () => setScreen('home');
-      const more = () => { limit += 50; render('older-events'); };
+      const more = () => { limit += 50; render('older-events', true); };
       const openDiary = () => setScreen('diary');
       app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, { home, more, openDiary })
         : play(life, selected, limit, {
           commit: (next) => void commit(next), preview, home, more, diary: openDiary, auto: autoplay, toggleAuto: toggleAutoplay,
           delay: autoplayDelay, changeDelay: changeAutoplayDelay,
         }));
-      if (stats) app.querySelector<HTMLButtonElement>('#stats-tab')?.click();
+      if (mobilePanel) app.querySelector<HTMLButtonElement>(`#${mobilePanel}-tab`)?.click();
       if (expanded) app.querySelector('.social-details')?.setAttribute('open', '');
       for (const [index, top] of scroll.entries()) app.querySelector(panels[index]!)?.scrollTo(0, top);
     } else {

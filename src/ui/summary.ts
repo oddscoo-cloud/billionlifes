@@ -1,3 +1,4 @@
+import { deathCauses, finalCause } from '../sim/death-causes';
 import { socialCircle } from './journal';
 import { demographics } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
@@ -35,12 +36,14 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
     el('p', 'location', ageLabel(life.ageInMonths))),
   el('div', 'profile-actions', button('Дневник', navigation.openDiary, 'quiet', 'open-diary'),
     button('Меню', navigation.home, 'quiet', 'menu')));
+  const [cause, context] = deathCauses[finalCause(life)];
   const overview = panel('Прожитая жизнь', facts([
     ['Возраст', ageLabel(life.ageInMonths)],
+    ['Причина смерти', cause],
     ['Страны проживания', countriesLivedIn(life).join(', ')],
     ['Образование', educationLabels[life.development.education]],
     ['Занятость', employmentLabels[life.development.employment]],
-  ]));
+  ]), el('p', 'helper', context));
   const skills = Object.entries(skillLabels).map(([key, label]) =>
     metric(label, life.development.skills[key as keyof typeof skillLabels]));
   const events = life.chronicle.filter(keyEvent).slice(-10);
