@@ -1,3 +1,5 @@
+import { readAutoplayDelay, writeAutoplayDelay } from './ui/autoplay-delay';
+import type { AutoplayDelay } from './ui/autoplay-delay';
 import { addDiaryEntry } from './sim/diary';
 import { diary } from './ui/journal';
 import { createLife } from './sim/birth';
@@ -61,6 +63,7 @@ function mount(session: LifeSession): void {
   let limit = 50;
   let busy = false;
   let autoplay = false;
+  let autoplayDelay = readAutoplayDelay();
   let timer: number | undefined;
 
   function stopAutoplay(): void {
@@ -69,13 +72,20 @@ function mount(session: LifeSession): void {
   }
 
   function scheduleAutoplay(): void {
+    window.clearTimeout(timer);
     if (!autoplay) return;
     timer = window.setTimeout(() => {
       const life = session.current?.life;
       if (autoplay && screen === 'play' && life?.status.type === 'active') {
         void commit(advanceAuto(life), 'play', true);
       }
-    }, 650);
+    }, autoplayDelay * 1000);
+  }
+
+  function changeAutoplayDelay(delay: AutoplayDelay): void {
+    autoplayDelay = delay;
+    writeAutoplayDelay(delay);
+    scheduleAutoplay();
   }
 
   function toggleAutoplay(): void {
@@ -166,6 +176,7 @@ function mount(session: LifeSession): void {
       app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, { home, more, openDiary })
         : play(life, selected, limit, {
           commit: (next) => void commit(next), preview, home, more, diary: openDiary, auto: autoplay, toggleAuto: toggleAutoplay,
+          delay: autoplayDelay, changeDelay: changeAutoplayDelay,
         }));
       if (stats) app.querySelector<HTMLButtonElement>('#stats-tab')?.click();
       if (expanded) app.querySelector('.social-details')?.setAttribute('open', '');
