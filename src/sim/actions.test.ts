@@ -60,7 +60,8 @@ describe('development and actions', () => {
   });
 
   it('previews deterministically and resolves using the same chance after preparation', () => {
-    const start = adult();
+    const base = adult();
+    const start = { ...base, birth: { ...base.birth, family: { ...base.birth.family, olderSiblings: 0 } } };
     const originalState = start.randomState;
     expect(availableActions(start)).toEqual(availableActions(start));
     expect(start.randomState).toBe(originalState);

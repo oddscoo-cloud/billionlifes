@@ -193,8 +193,8 @@ export function advanceTurningPoint(life: LifeSnapshot): LifeSnapshot {
   if (recentWorld.some((event) => event.type === 'world' && event.id === 'move-paperwork' && event.ageInMonths === age - 2)) {
     candidates.push('unfamiliar-city');
   }
-  const fresh = candidates.filter((id) => !life.chronicle.slice(-90).some(
-    (event) => event.type === 'turning-point' && event.id === id && age - event.ageInMonths < 36,
+  const fresh = candidates.filter((id) => !life.chronicle.some(
+    (event) => event.type === 'turning-point' && event.id === id,
   ));
   const linked = fresh.find((id) =>
     id === 'unfamiliar-city' || (id === 'lost-job' && recentWorld.some((event) => event.type === 'world' && event.id === 'shift-cut'))

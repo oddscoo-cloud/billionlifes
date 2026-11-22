@@ -1,3 +1,4 @@
+import { romanceEvents } from '../sim/romance';
 import { deathCauses } from '../sim/death-causes';
 import { worldVariantCount } from '../data/world-event-variants';
 import type { WorldEventId } from '../data/world-events';
@@ -13,7 +14,7 @@ import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
 import { closePersonIds, memoryKinds } from '../sim/relationships';
 
-export const schemaVersion = 4;
+export const schemaVersion = 5;
 
 export interface SaveRecord {
   readonly schemaVersion: typeof schemaVersion;
@@ -102,6 +103,10 @@ function validEvent(event: Record<string, unknown>): boolean {
     case 'turning-point': return validTurningPoint(event.id);
     case 'turning-choice':
     case 'turning-consequence': return validTurningPoint(event.id) && (event.response === 0 || event.response === 1);
+    case 'romance': return integer(event.ageInMonths, 18 * 12) && oneOf(event.step, romanceEvents)
+      && typeof event.name === 'string' && event.name.trim().length > 0 && event.name.length <= 40;
+    case 'sibling-death':
+    case 'sibling-visit': return integer(event.index, 0, 4) && oneOf(event.role, ['Брат', 'Сестра']);
     case 'parent-death': return oneOf(event.role, parentRoles);
     case 'family-response': return oneOf(event.choice, griefChoices);
     case 'death': return event.cause === undefined || (typeof event.cause === 'string' && Object.hasOwn(deathCauses, event.cause));
@@ -110,6 +115,7 @@ function validEvent(event: Record<string, unknown>): boolean {
       && object(event.effects)
       && Object.entries(event.effects).every(([key, value]) => oneOf(key, eventEffects) && integer(value, -100, 100))
       && (event.country === undefined || oneOf(event.country, countryCodes))
+      && (event.sibling === undefined || integer(event.sibling, 0, 4))
       && (event.person === undefined || oneOf(event.person, closePersonIds));
     case 'plan': return validPlan(event.plan);
     case 'childhood-choice':
@@ -127,11 +133,13 @@ function validEvent(event: Record<string, unknown>): boolean {
   }
 }
 
-function validChronicle(value: unknown, age: number, status: unknown): boolean {
+function validChronicle(value: unknown, age: number, status: unknown, siblingCount: number): boolean {
   if (!Array.isArray(value) || value[0]?.type !== 'birth') return false;
   let previousAge = 0;
   for (const [index, event] of value.entries()) {
     if (!object(event) || !integer(event.ageInMonths, previousAge, age) || !validEvent(event)) return false;
+    if ((event.type === 'sibling-death' || event.type === 'sibling-visit') && !integer(event.index, 0, siblingCount - 1)) return false;
+    if (event.type === 'world' && event.sibling !== undefined && !integer(event.sibling, 0, siblingCount - 1)) return false;
     if (event.type === 'birth' && index > 0) return false;
     if (event.type === 'death'
       && (status !== 'dead' || index !== value.length - 1 || event.ageInMonths !== age)) return false;
@@ -157,7 +165,9 @@ function validLife(value: unknown): value is LifeSnapshot {
         && ((wellbeing.phase === 'strain' && ageInMonths === 180)
           || (wellbeing.phase === 'withdrawn' && ageInMonths === 183)));
     if (status.decision === 'family-loss') {
-      if (!value.parents.some((parent) => parent.diedAt === ageInMonths)
+      const siblingDied = Array.isArray(value.chronicle) && value.chronicle.some((event) =>
+        object(event) && event.type === 'sibling-death' && event.ageInMonths === ageInMonths);
+      if ((!siblingDied && !value.parents.some((parent) => parent.diedAt === ageInMonths))
         || (status.resume !== undefined && !ordinary(status.resume))) return false;
     } else if (status.decision === 'turning-point') {
       const last = Array.isArray(value.chronicle) ? value.chronicle.at(-1) : null;
@@ -170,7 +180,7 @@ function validLife(value: unknown): value is LifeSnapshot {
     && validDevelopment(value.development) && validRelationships(value.relationships, ageInMonths)
     && integer(wellbeing.mood, 0, 100) && integer(wellbeing.monthsInPhase, 0, ageInMonths)
     && oneOf(wellbeing.phase, ['none', 'strain', 'withdrawn', 'recovering', 'resolved'])
-    && typeof wellbeing.support === 'boolean' && validDiary(value.diary, ageInMonths) && validChronicle(value.chronicle, ageInMonths, status.type);
+    && typeof wellbeing.support === 'boolean' && validDiary(value.diary, ageInMonths) && validChronicle(value.chronicle, ageInMonths, status.type, value.birth.family.olderSiblings);
 }
 
 export function decodeSave(raw: unknown): SaveRecord {

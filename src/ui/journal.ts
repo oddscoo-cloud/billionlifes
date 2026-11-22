@@ -1,3 +1,4 @@
+import { canVisitSibling, siblings, visitSibling } from '../sim/siblings';
 import { parentLabels } from '../sim/family';
 import { demographics } from '../data/demographics';
 import { worldEvents } from '../data/world-events';
@@ -66,7 +67,7 @@ const relationshipDescriptions = {
   neighbor: 'Знакомый по району. Помог герою освоиться после переезда.',
 };
 
-export function socialCircle(life: LifeSnapshot): HTMLElement {
+export function socialCircle(life: LifeSnapshot, commit?: (next: LifeSnapshot) => void): HTMLElement {
   const family = life.birth.family;
   const house = { 'two-parents': 'Двое родителей', 'one-parent': 'Один родитель', 'other-guardians': 'Другие опекуны' };
   const means = { limited: 'Ограниченный', moderate: 'Средний', high: 'Высокий' };
@@ -80,6 +81,17 @@ export function socialCircle(life: LifeSnapshot): HTMLElement {
     const age = ageLabel(parent.ageAtBirth + (parent.diedAt ?? life.ageInMonths));
     return el('p', 'parent-line', el('strong', '', parentLabels[parent.role]),
       el('span', '', parent.diedAt === undefined ? age : `Умер${parent.role === 'mother' ? 'ла' : ''} · ${age}`));
+  });
+  const siblingCards = siblings(life).map((person) => {
+    const age = ageLabel(person.ageInMonths);
+    const status = person.diedAt === undefined ? age : `Умер${person.role === 'Сестра' ? 'ла' : ''} · ${age}`;
+    const row = el('div', 'sibling-card', el('p', 'parent-line', el('strong', '', person.role), el('span', '', status)));
+    if (person.diedAt === undefined) {
+      row.append(metric('Доверие', person.trust));
+      if (commit && canVisitSibling(life, person)) row.append(button('Провести время вместе',
+        () => commit(visitSibling(life, person.index)), 'quiet', `sibling-${person.index}`));
+    }
+    return row;
   });
   const contacts = life.relationships.map((person) => {
     const memories = el('ol', 'chronicle', ...person.memories.slice(-6).reverse().map((memory) => el('li', '',
@@ -97,6 +109,6 @@ export function socialCircle(life: LifeSnapshot): HTMLElement {
   const details = el('details', 'social-details', el('summary', '', 'Детали семьи и общие воспоминания'),
     household, ...contacts);
   const closePeople = life.relationships.filter((person) => person.id !== 'caregiver' || !life.parents.length);
-  return panel('Круг общения', ...parents, ...closePeople.map((person) =>
+  return panel('Круг общения', ...parents, ...siblingCards, ...closePeople.map((person) =>
     el('p', 'parent-line', peopleLabels[person.id], el('span', '', `Доверие ${person.trust}`))), details);
 }

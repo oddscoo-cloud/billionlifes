@@ -20,7 +20,7 @@ function countriesLivedIn(life: LifeSnapshot): readonly string[] {
 
 function keyEvent(event: LifeEvent): boolean {
   return (event.type === 'world' && ['library-return', 'move-welcome', 'shift-cover', 'new-colleague'].includes(event.id))
-    || event.type === 'turning-choice' || event.type === 'turning-consequence' || event.type === 'parent-death' || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
+    || event.type === 'turning-choice' || event.type === 'turning-consequence' || event.type === 'sibling-death' || event.type === 'parent-death' || (event.type === 'romance' && event.step !== 'spend-time') || event.type === 'birth' || event.type === 'death' || event.type === 'crisis'
     || event.type === 'childhood-choice' || (event.type === 'action' && event.succeeded);
 }
 

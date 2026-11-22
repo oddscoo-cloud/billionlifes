@@ -269,3 +269,8 @@ textarea {
 }
 .birth-preview[open] { display: grid; gap: .85rem; }
 .birth-preview::backdrop { background: #0b0e11c9; }
+
+.sibling-card { display: grid; gap: .4rem; border-top: 1px solid var(--line); padding-block-start: .5rem; }
+.sibling-card button { justify-self: start; }
+.romance-actions[open] { display: grid; gap: .4rem; }
+.romance-actions button { width: 100%; margin-top: .3rem; padding: .4rem .55rem; }

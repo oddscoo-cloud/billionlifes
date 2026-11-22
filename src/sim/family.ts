@@ -1,6 +1,7 @@
 import { monthlyMortality } from '../data/demographics';
 import type { BirthConditions } from './birth';
-import type { LifeSnapshot } from './life';
+import { siblingLosses, siblings } from './siblings';
+import type { LifeEvent, LifeSnapshot } from './life';
 import { drawRandom } from './random';
 
 export const parentRoles = ['mother', 'father'] as const;
@@ -48,14 +49,30 @@ export function advanceParents(life: LifeSnapshot): LifeSnapshot {
     return lost;
   });
   if (!losses.length) return life;
-  const resume = life.status.type === 'decision' && life.status.decision !== 'family-loss' && life.status.decision !== 'turning-point'
-    ? life.status.decision : undefined;
+  return applyFamilyLoss({ ...life, parents: next },
+    losses.map(({ role }) => ({ type: 'parent-death', role, ageInMonths })));
+}
+
+function applyFamilyLoss(life: LifeSnapshot, losses: readonly LifeEvent[]): LifeSnapshot {
+  const status = life.status;
+  const resume = status.type === 'decision' && status.decision !== 'turning-point'
+    ? status.decision === 'family-loss' ? status.resume : status.decision : undefined;
   return {
-    ...life, parents: next,
+    ...life,
     status: { type: 'decision', decision: 'family-loss', ...(resume ? { resume } : {}) },
     wellbeing: { ...life.wellbeing, mood: Math.max(0, life.wellbeing.mood - 16 * losses.length) },
-    chronicle: [...life.chronicle, ...losses.map(({ role }) => ({ type: 'parent-death' as const, role, ageInMonths }))],
+    chronicle: [...life.chronicle, ...losses],
   };
+}
+
+export function advanceRelatives(life: LifeSnapshot): LifeSnapshot {
+  const next = advanceParents(life);
+  const losses = siblingLosses(life);
+  if (!losses.length) return next;
+  const relatives = siblings(life);
+  return applyFamilyLoss(next, losses.map((index) => ({
+    type: 'sibling-death', index, role: relatives[index]!.role, ageInMonths: life.ageInMonths,
+  })));
 }
 
 export const griefChoices = ['support', 'remember'] as const;
