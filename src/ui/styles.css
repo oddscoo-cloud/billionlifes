@@ -2,17 +2,29 @@
   color-scheme: dark;
   font-family: system-ui, sans-serif;
   line-height: 1.55;
-  background: #141719;
+  background: #111516;
   color: #eef0e9;
   --surface: #1b1f21;
+  --surface-raised: #22292a;
   --line: #353b3e;
   --muted: #b5bfbd;
   --accent: #9acfbb;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; }
-.masthead { border-bottom: 1px solid var(--line); padding: .9rem max(1.2rem, calc((100% - 72rem) / 2)); }
+body {
+  min-width: 18rem;
+  margin: 0;
+  background:
+    radial-gradient(circle at 85% -10%, #35564b33, transparent 34rem),
+    linear-gradient(180deg, #18201f 0, #111516 22rem);
+}
+.masthead {
+  border-bottom: 1px solid #ffffff0d;
+  padding: .9rem max(1.2rem, calc((100% - 72rem) / 2));
+  background: #11151699;
+  backdrop-filter: blur(12px);
+}
 .brand { font-weight: 750; letter-spacing: -.025em; white-space: nowrap; }
 .brand span { color: var(--accent); margin-right: .35rem; }
 main, .notice { width: min(72rem, calc(100% - 2rem)); margin-inline: auto; }
@@ -30,15 +42,17 @@ button, select, input:not([type=checkbox]) {
   padding: .6rem .85rem; min-height: 2.75rem;
 }
 button { cursor: pointer; text-align: left; }
-button:hover { border-color: var(--accent); }
+button:not(:disabled):hover { border-color: var(--accent); background: var(--surface-raised); }
 button.primary { color: #182b23; background: var(--accent); border-color: var(--accent); font-weight: 700; }
 button.primary:hover { background: #b4e2ce; }
+button:disabled { cursor: not-allowed; }
 :focus-visible { outline: 2px solid #e7bc80; outline-offset: 3px; }
 input[type=checkbox] { accent-color: var(--accent); width: 1.2rem; height: 1.2rem; }
 .turns, .option-list { display: flex; flex-wrap: wrap; gap: .55rem; }
 .intro {
   display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
   min-height: 30rem; border: 1px solid var(--line); border-radius: 1.5rem; overflow: hidden;
+  background: #1b1f21cc; box-shadow: 0 1.5rem 4rem #0000001f;
 }
 .intro-copy { display: grid; align-content: center; gap: 1.4rem; padding: clamp(1.4rem, 5vw, 4rem); }
 .intro-art {
@@ -63,6 +77,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 1.2rem; height: 1.2re
 .panel {
   display: grid; align-content: start; gap: .85rem; background: var(--surface); border: 1px solid var(--line);
   border-radius: 1rem; padding: clamp(1rem, 3vw, 1.45rem); min-width: 0;
+  box-shadow: 0 .5rem 1.5rem #00000012;
 }
 .preview { border: 1px solid #45645a; background: #202c2a; border-radius: .75rem; padding: 1rem; }
 .preview > * + * { margin-top: .65rem; }
