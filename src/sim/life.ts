@@ -1,5 +1,7 @@
 import { monthlyMortality } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
+import { milestoneAt } from './actions';
+import type { LifeAction, Milestone } from './actions';
 import type { NewLife } from './birth';
 import { grow, growMonth, initialDevelopment, plans } from './growth';
 import type { Development, Plan } from './growth';
@@ -11,13 +13,19 @@ export type LifeEvent = {
   readonly ageInMonths: number;
 } & (
   | { readonly type: 'birth' | 'childhood-year' | 'death' }
+  | {
+      readonly type: 'action';
+      readonly action: LifeAction;
+      readonly succeeded: boolean;
+      readonly chance: number;
+    }
   | { readonly type: 'plan'; readonly plan: Plan | null }
   | { readonly type: 'childhood-choice'; readonly choice: ChildhoodChoice }
 );
 
 export type LifeStatus =
   | { readonly type: 'active' }
-  | { readonly type: 'decision'; readonly decision: 'first-childhood-activity' }
+  | { readonly type: 'decision'; readonly decision: 'first-childhood-activity' | Milestone }
   | { readonly type: 'dead' };
 
 export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
@@ -65,11 +73,17 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
   }
 
   const development = growMonth(life.development);
-  return development === life.development ? next : { ...next, development };
+  const milestone = milestoneAt(ageInMonths);
+  return {
+    ...next,
+    development,
+    status: milestone ? { type: 'decision', decision: milestone } : next.status,
+  };
 }
 
 export function availableChildhoodChoices(life: LifeSnapshot): readonly ChildhoodChoice[] {
-  return life.status.type === 'decision' ? ['read-with-caregiver', 'play-with-peers'] : [];
+  return life.status.type === 'decision' && life.status.decision === 'first-childhood-activity'
+    ? ['read-with-caregiver', 'play-with-peers'] : [];
 }
 
 export function resolveChildhoodChoice(life: LifeSnapshot, choice: ChildhoodChoice): LifeSnapshot {

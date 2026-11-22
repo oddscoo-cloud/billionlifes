@@ -14,7 +14,7 @@ export interface Development {
   readonly education: 'general' | 'vocational' | 'higher';
   readonly employment: 'unemployed' | 'entry-level' | 'specialist' | 'retired';
   readonly funds: number;
-  readonly admissionAttempts: number;
+  readonly nextAdmissionAge: number;
 }
 
 export function initialDevelopment(means: HouseholdMeans): Development {
@@ -27,7 +27,7 @@ export function initialDevelopment(means: HouseholdMeans): Development {
     education: 'general',
     employment: 'unemployed',
     funds: { limited: 2, moderate: 5, high: 10 }[means],
-    admissionAttempts: 0,
+    nextAdmissionAge: 0,
   };
 }
 
