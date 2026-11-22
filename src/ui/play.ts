@@ -124,15 +124,26 @@ export function play(
     el('div', 'eyebrow', 'Дневник жизни'), heading(life.birth.name),
     el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`)),
   button('Меню', handlers.home, 'quiet', 'menu'));
+  const { family, startingHealth } = life.birth;
+  const caregivers = {
+    'two-parents': 'Двое родителей', 'one-parent': 'Один родитель', 'other-guardians': 'Другие опекуны',
+  };
+  const householdMeans = { limited: 'Ограниченный', moderate: 'Средний', high: 'Высокий' };
   const data = facts([
     ['Страна рождения', demographics.countries[life.birth.countryOfBirth].name],
     ['Достаток', `${life.development.funds} ед.`],
     ['Образование', educationLabels[life.development.education]],
     ['Занятость', employmentLabels[life.development.employment]],
   ]);
+  const birth = el('details', '', el('summary', '', 'Условия при рождении'), facts([
+    ['Семья', caregivers[family.caregivers]],
+    ['Старшие братья и сёстры', family.olderSiblings],
+    ['Достаток семьи', householdMeans[family.means]],
+    ['Здоровье', startingHealth === 'typical' ? 'Обычное' : 'Требовалась поддержка'],
+  ]));
   const wellbeing = panel('Самочувствие', el('p', '', phaseLabels[life.wellbeing.phase]),
     metric('Настроение', life.wellbeing.mood));
   return el('div', '', profile, el('div', 'grid',
     el('div', 'stack', controls(life, selected, handlers), chronicle(life, limit, handlers.more)),
-    el('aside', 'stack', panel('О герое', data), wellbeing, development(life), relations(life))));
+    el('aside', 'stack', panel('О герое', data, birth), wellbeing, development(life), relations(life))));
 }

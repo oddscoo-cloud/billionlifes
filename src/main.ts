@@ -8,6 +8,7 @@ import { LifeSession } from './storage/session';
 import { button, el, panel } from './ui/elements';
 import { play } from './ui/play';
 import { birthScreen, startScreen } from './ui/start';
+import { summary } from './ui/summary';
 import './ui/styles.css';
 
 const app = document.querySelector<HTMLElement>('#app')!;
@@ -114,11 +115,10 @@ function mount(session: LifeSession): void {
         void commit(startLife(createLife({ name, sex, seed })));
       }));
     } else if (screen === 'play' && life) {
-      app.replaceChildren(play(life, selected, limit, {
-        commit: (next) => void commit(next), preview,
-        home: () => setScreen('home'),
-        more: () => { limit += 50; render('older-events'); },
-      }));
+      const home = () => setScreen('home');
+      const more = () => { limit += 50; render('older-events'); };
+      app.replaceChildren(life.status.type === 'dead' ? summary(life, limit, home, more)
+        : play(life, selected, limit, { commit: (next) => void commit(next), preview, home, more }));
     } else {
       app.replaceChildren(startScreen(life, () => setScreen('play'), () => setScreen('birth', 'birth-name')));
     }
