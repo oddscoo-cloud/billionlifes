@@ -129,10 +129,10 @@ it('opens a version-one snapshot with an empty diary and commits world events an
     };
   });
   const restored = await store.read();
-  expect(restored).toEqual({ schemaVersion: 5, revision: 9, life: newborn() });
+  expect(restored).toEqual({ schemaVersion: 6, revision: 9, life: newborn() });
   const life = advanceMonth(restored!.life);
   const noted = { ...life, diary: [{ ageInMonths: life.ageInMonths, text: 'Первый месяц.' }] };
-  expect(await store.write(noted, 9)).toEqual({ schemaVersion: 5, revision: 10, life: noted });
+  expect(await store.write(noted, 9)).toEqual({ schemaVersion: 6, revision: 10, life: noted });
   expect((await store.read())?.life).toEqual(noted);
   store.close();
 });

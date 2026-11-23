@@ -31,6 +31,7 @@ import {
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
 import { innerVoice } from '../sim/inner-voice';
+import { goalDescriptions, goalIds, goalLabels, goalProgress, setGoal } from '../sim/goals';
 
 export function metric(label: string, value: number): HTMLElement {
   const meter = el('meter');
@@ -128,6 +129,38 @@ function choiceCard(label: string, details: string, click: () => void, id: strin
   control.setAttribute('aria-label', label);
   control.append(description);
   return control;
+}
+
+function goalsDialog(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLDialogElement {
+  const title = el('h2', '', 'Цели жизни');
+  title.id = 'goals-title';
+  const lifeGoals = life.goals ?? [];
+  const selected = new Set(lifeGoals.map((goal) => goal.id));
+  const cards = goalIds.map((id) => {
+    const progress = goalProgress(life, id);
+    const active = selected.has(id);
+    const card = el('article', `goal-card ${active ? 'goal-active' : ''}`,
+      el('div', 'goal-card-head',
+        el('strong', '', goalLabels[id]),
+        el('span', 'goal-percent', `${progress}%`)),
+      el('p', 'helper', goalDescriptions[id]),
+      el('div', 'goal-progress',
+        el('span', '', ''),
+      ),
+      button(active ? 'Цель выбрана' : 'Поставить цель',
+        () => commit(setGoal(life, id)), active ? 'quiet' : 'primary', `goal-${id}`));
+    const bar = card.querySelector<HTMLElement>('.goal-progress span');
+    if (bar) bar.style.width = `${progress}%`;
+    card.querySelector('button')!.disabled = !active && lifeGoals.length >= 3;
+    return card;
+  });
+  const dialog = el('dialog', 'goals-dialog',
+    title,
+    el('p', 'helper', 'Можно выбрать до трёх целей. Прогресс обновляется реальными решениями и изменениями в жизни.'),
+    el('div', 'goal-grid', ...cards),
+    el('div', 'turns', button('Закрыть', () => dialog.close(), 'quiet'))) as HTMLDialogElement;
+  dialog.setAttribute('aria-labelledby', title.id);
+  return dialog;
 }
 
 function planControl(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLElement {
@@ -318,12 +351,17 @@ export function play(
   life: LifeSnapshot, selected: ActionOption | null, limit: number, handlers: PlayHandlers,
 ): HTMLElement {
   const voice = innerVoice(life);
+  const goals = goalsDialog(life, handlers.commit);
+  const lifeGoals = life.goals ?? [];
+  const goalButton = button(lifeGoals.length
+    ? `Цели · ${lifeGoals.length}/3`
+    : 'Выбрать цели', () => goals.showModal(), 'quiet', 'open-goals');
   const profile = el('section', 'profile', el('div', '',
     heading(life.birth.name),
     el('p', 'location', `${ageLabel(life.ageInMonths)} · ${demographics.countries[life.countryOfResidence].name}`),
     el('p', 'voice-line', `Желание: «${voice.desire}»`)),
   el('div', 'profile-actions', button('Дневник', handlers.diary, 'quiet', 'open-diary'),
-    button('Меню', handlers.home, 'quiet', 'menu')));
+    goalButton, button('Меню', handlers.home, 'quiet', 'menu')));
   const { family, startingHealth } = life.birth;
   const caregivers = {
     'two-parents': 'Двое родителей', 'one-parent': 'Один родитель', 'other-guardians': 'Другие опекуны',
@@ -385,5 +423,5 @@ export function play(
     tabs.append(tab);
   }
   grid.dataset.mobilePanel = 'turns';
-  return el('div', 'dashboard', profile, el('div', 'dashboard-content', tabs, grid));
+  return el('div', 'dashboard', profile, el('div', 'dashboard-content', tabs, grid), goals);
 }

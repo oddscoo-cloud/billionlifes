@@ -23,6 +23,7 @@ import type { Development, Plan } from './growth';
 import { initialRelationships, remember } from './relationships';
 import type { Relationship } from './relationships';
 import { drawRandom } from './random';
+import type { LifeGoal } from './goals';
 
 export const firstChoiceAgeInMonths = 4 * 12;
 
@@ -62,6 +63,7 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
   readonly ageInMonths: number;
   readonly countryOfResidence: CountryCode;
   readonly status: LifeStatus;
+  readonly goals?: readonly LifeGoal[];
   readonly development: Development;
   readonly wellbeing: Wellbeing;
   readonly physicalHealth: PhysicalHealth;
@@ -74,6 +76,7 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
 export function startLife(newLife: NewLife): LifeSnapshot {
   return {
     ...newLife,
+    goals: [],
     diary: [],
     parents: initialParents(newLife.birth.family, newLife.seed),
     wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false,
