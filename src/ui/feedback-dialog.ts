@@ -1,22 +1,20 @@
 import { button, el } from './elements';
+import { feedbackAccessKey, sendFeedback } from './feedback-mail';
 import { translate, tr } from './i18n';
 
-export const feedbackEmail = 'support@beyondbirth';
-
 export function feedbackDialog(): HTMLDialogElement {
+  const accessKey = feedbackAccessKey(import.meta.env.VITE_WEB3FORMS_ACCESS_KEY);
   const title = el('h2', '', translate('feedback-title', 'Предложить или сообщить'));
   title.id = 'feedback-title';
 
   const category = el('select');
   category.id = 'feedback-category';
   category.append(
-    new Option(translate('feedback-suggestion', 'Предложение'), 'Предложение'),
-    new Option(translate('feedback-bug', 'Ошибка или баг'), 'Ошибка'),
-    new Option(translate('feedback-question', 'Вопрос'), 'Вопрос'),
-    new Option(translate('feedback-other', 'Другое'), 'Другое'),
+    new Option(translate('feedback-suggestion', 'Предложение'), 'suggestion'),
+    new Option(translate('feedback-bug', 'Ошибка или баг'), 'bug'),
+    new Option(translate('feedback-question', 'Вопрос'), 'question'),
+    new Option(translate('feedback-other', 'Другое'), 'other'),
   );
-
-  const categoryLabel = () => category.selectedOptions[0]?.label ?? '';
 
   const name = el('input');
   name.id = 'feedback-name';
@@ -30,6 +28,7 @@ export function feedbackDialog(): HTMLDialogElement {
   contact.autocomplete = 'email';
   contact.maxLength = 120;
   contact.placeholder = translate('feedback-optional', 'Необязательно');
+  contact.addEventListener('input', () => contact.setCustomValidity(''));
 
   const message = el('textarea');
   message.id = 'feedback-message';
@@ -40,64 +39,48 @@ export function feedbackDialog(): HTMLDialogElement {
   message.placeholder = translate('feedback-placeholder', 'Опишите предложение, шаги воспроизведения бага или возникшую проблему…');
   message.addEventListener('input', () => message.setCustomValidity(''));
 
-  const status = el('p', 'feedback-status');
-  status.setAttribute('aria-live', 'polite');
-  let preparedSubject = '';
-  let preparedBody = '';
+  const botcheck = el('input');
+  botcheck.type = 'checkbox';
+  botcheck.hidden = true;
+  botcheck.tabIndex = -1;
+  botcheck.name = 'botcheck';
 
-  const form = el('form', 'feedback-form',
+  const status = el('p', 'feedback-status');
+  status.setAttribute('role', 'status');
+  const cancel = button(translate('feedback-cancel', 'Отмена'), () => dialog.close(), 'quiet');
+  const submit = el('button', 'primary', tr('Отправить сообщение'));
+  submit.id = 'submit-feedback';
+  submit.type = 'submit';
+
+  const fields = el('fieldset', 'feedback-entry-fields',
     el('label', 'field', translate('feedback-category', 'Тип обращения'), category),
     el('div', 'feedback-fields',
       el('label', 'field', translate('feedback-name', 'Имя'), name),
       el('label', 'field', translate('feedback-contact', 'Почта для ответа'), contact)),
     el('label', 'field', translate('feedback-message', 'Сообщение'), message),
-    el('p', 'helper', tr`${feedbackEmail} — письмо не отправляется автоматически. Откройте почтовое приложение и нажмите «Отправить».`));
-
+    botcheck,
+    el('p', 'helper', tr('Сообщение уйдёт разработчику. Почту можно оставить, если хотите получить ответ.')));
+  const form = el('form', 'feedback-form', fields, status, el('div', 'turns', cancel, submit));
   form.noValidate = true;
+  fields.disabled = !accessKey;
+  submit.disabled = !accessKey;
+  if (!accessKey) status.textContent = tr('Отправка пока недоступна.');
+
+  const dialog = el('dialog', 'feedback-dialog', title,
+    el('p', 'lede', tr('Помогите улучшить игру: предложение, баг или заметка о том, что не работает.')), form);
+  dialog.setAttribute('aria-labelledby', title.id);
+  let sending = false;
+  dialog.addEventListener('cancel', (event) => { if (sending) event.preventDefault(); });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+    void submitFeedback();
   });
 
-  const dialog = el('dialog', 'feedback-dialog',
-    title,
-    el('p', 'lede', tr('Помогите улучшить игру: предложение, баг или заметка о том, что не работает.')),
-    form,
-    status,
-    el('div', 'turns',
-      button(translate('feedback-cancel', 'Отмена'), () => dialog.close(), 'quiet'),
-      button(tr('Скопировать текст'), copyPreparedFeedback, 'quiet', 'copy-feedback'),
-      button(translate('feedback-submit', 'Открыть письмо'), submitFeedback, 'primary', 'submit-feedback'))) as HTMLDialogElement;
-
-  async function copyPreparedFeedback(): Promise<void> {
+  async function submitFeedback(): Promise<void> {
+    if (sending || !accessKey || botcheck.checked) return;
     const text = message.value.trim();
-    if (text.length < 10) {
-      message.setCustomValidity(tr('Опишите обращение минимум 10 символами.'));
-      message.reportValidity();
-      return;
-    }
-    preparedSubject = `[Beyond Birth] ${categoryLabel()}${name.value.trim() ? ` · ${name.value.trim()}` : ''}`;
-    preparedBody = [
-      tr`Тип: ${categoryLabel()}`,
-      name.value.trim() ? tr`Имя: ${name.value.trim()}` : '',
-      contact.value.trim() ? tr`Почта для ответа: ${contact.value.trim()}` : '',
-      '',
-      text,
-      '',
-      tr`Страница: ${location.href}`,
-      tr`Платформа: ${navigator.platform}`,
-    ].filter(Boolean).join('\n');
-    try {
-      await navigator.clipboard.writeText(tr`Кому: ${feedbackEmail}\nТема: ${preparedSubject}\n\n${preparedBody}`);
-      status.textContent = tr('Адрес, тема и текст скопированы. Вставьте их в любое почтовое приложение.');
-    } catch {
-      status.textContent = tr`Скопируйте вручную. Адрес: ${feedbackEmail}`;
-    }
-  }
-
-  function submitFeedback(): void {
-    const text = message.value.trim();
-    if (text.length < 10) {
-      message.setCustomValidity(tr('Опишите обращение минимум 10 символами.'));
+    if (text.length < 10 || text.length > message.maxLength) {
+      message.setCustomValidity(tr('Введите сообщение длиной от 10 до 3000 символов.'));
       message.reportValidity();
       return;
     }
@@ -106,27 +89,29 @@ export function feedbackDialog(): HTMLDialogElement {
       contact.reportValidity();
       return;
     }
-    contact.setCustomValidity('');
-    const author = name.value.trim();
-    const email = contact.value.trim();
-    const subject = `[Beyond Birth] ${categoryLabel()}${author ? ` · ${author}` : ''}`;
-    const body = [
-      tr`Тип: ${categoryLabel()}`,
-      author ? tr`Имя: ${author}` : '',
-      email ? tr`Почта для ответа: ${email}` : '',
-      '',
-      text,
-      '',
-      tr`Страница: ${location.href}`,
-      tr`Платформа: ${navigator.platform}`,
-      tr`Браузер: ${navigator.userAgent}`,
-    ].filter(Boolean).join('\n');
-    status.textContent = tr('Почтовое приложение открыто для черновика. Нажмите «Отправить» в приложении; если окна не появилось, используйте «Скопировать текст».');
-    location.href = `mailto:${feedbackEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    sending = true;
+    fields.disabled = cancel.disabled = submit.disabled = true;
+    status.textContent = tr('Отправляем сообщение…');
+    const result = await sendFeedback(accessKey, {
+      category: category.selectedOptions[0]?.label ?? category.value,
+      name: name.value.trim(),
+      email: contact.value.trim(),
+      message: text,
+    });
+    sending = false;
+    fields.disabled = cancel.disabled = submit.disabled = false;
+    if (result === 'sent') {
+      form.reset();
+      status.textContent = tr('Сообщение отправлено. Спасибо!');
+    } else if (result === 'rate-limited') {
+      status.textContent = tr('Слишком много запросов. Попробуйте отправить сообщение позже.');
+    } else if (result === 'rejected') {
+      status.textContent = tr('Сообщение не отправлено. Попробуйте ещё раз позже.');
+    } else {
+      status.textContent = tr('Не удалось подтвердить отправку. Текст сообщения сохранён в форме.');
+    }
   }
 
-  dialog.setAttribute('aria-labelledby', title.id);
-  dialog.addEventListener('cancel', () => dialog.close());
   return dialog;
 }
-
