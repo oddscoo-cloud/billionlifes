@@ -6,7 +6,7 @@ export const languages = [
 
 export type Language = (typeof languages)[number][0];
 
-const storageKey = 'billionlifes-language';
+const storageKey = 'beyond-birth-language';
 
 export function getLanguage(): Language {
   const saved = localStorage.getItem(storageKey);

@@ -4,7 +4,7 @@
 
 ## Источник и атрибуция
 
-United Nations, Department of Economic and Social Affairs, Population Division (2024). *World Population Prospects 2024*. Online Edition. Данные ООН доступны на условиях [CC BY 3.0 IGO](https://creativecommons.org/licenses/by/3.0/igo/). В Billionlifes данные преобразованы до 193 стран, одного года и указанных ниже показателей. [Портал ООН](https://population.un.org/wpp/)
+United Nations, Department of Economic and Social Affairs, Population Division (2024). *World Population Prospects 2024*. Online Edition. Данные ООН доступны на условиях [CC BY 3.0 IGO](https://creativecommons.org/licenses/by/3.0/igo/). В Beyond Birth данные преобразованы до 193 стран, одного года и указанных ниже показателей. [Портал ООН](https://population.un.org/wpp/)
 
 | Исходный архив | Поля и преобразование |
 | --- | --- |

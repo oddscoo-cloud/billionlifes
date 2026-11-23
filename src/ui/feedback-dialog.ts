@@ -1,7 +1,7 @@
 import { button, el } from './elements';
 import { translate } from './i18n';
 
-export const feedbackEmail = 'ivanmlanar16@gmail.com';
+export const feedbackEmail = 'support@beyondbirth';
 
 export function feedbackDialog(): HTMLDialogElement {
   const title = el('h2', '', translate('feedback-title', 'Предложить или сообщить'));
@@ -73,7 +73,7 @@ export function feedbackDialog(): HTMLDialogElement {
       message.reportValidity();
       return;
     }
-    preparedSubject = `[Billionlifes] ${category.value}${name.value.trim() ? ` · ${name.value.trim()}` : ''}`;
+    preparedSubject = `[Beyond Birth] ${category.value}${name.value.trim() ? ` · ${name.value.trim()}` : ''}`;
     preparedBody = [
       `Тип: ${category.value}`,
       name.value.trim() ? `Имя: ${name.value.trim()}` : '',
@@ -107,7 +107,7 @@ export function feedbackDialog(): HTMLDialogElement {
     contact.setCustomValidity('');
     const author = name.value.trim();
     const email = contact.value.trim();
-    const subject = `[Billionlifes] ${category.value}${author ? ` · ${author}` : ''}`;
+    const subject = `[Beyond Birth] ${category.value}${author ? ` · ${author}` : ''}`;
     const body = [
       `Тип: ${category.value}`,
       author ? `Имя: ${author}` : '',
