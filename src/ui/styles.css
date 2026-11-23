@@ -287,6 +287,29 @@ textarea {
 .birth-preview[open] { display: grid; gap: .85rem; }
 .birth-preview::backdrop { background: #0b0e11c9; }
 
+.start-screen { display: grid; gap: 1rem; }
+.randomness-guide {
+  width: min(52rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  padding: clamp(.85rem, 4vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: inherit;
+}
+.randomness-guide[open] { display: grid; gap: .85rem; }
+.randomness-guide::backdrop { background: #0b0e11c9; }
+.odds-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.odds-card { display: grid; align-content: start; gap: .45rem; padding: .85rem; border: 1px solid var(--line); border-radius: .75rem; background: #171b1d; }
+.odds-card strong { color: var(--accent); }
+.odds-facts { display: grid; gap: .2rem; margin: .15rem 0 0; }
+.odds-facts div { display: flex; justify-content: space-between; gap: .5rem; padding-block: .15rem; border-top: 1px solid var(--line); }
+.odds-facts dt { color: var(--muted); }
+.odds-facts dd { margin: 0; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.odds-source { display: grid; gap: .45rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+@media (max-width: 37rem) { .odds-grid { grid-template-columns: minmax(0, 1fr); } }
+
 .sibling-card { display: grid; gap: .4rem; border-top: 1px solid var(--line); padding-block-start: .5rem; }
 .sibling-card button { justify-self: start; }
 .romance-actions[open] { display: grid; gap: .4rem; }

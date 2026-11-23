@@ -9,6 +9,53 @@ function intro(...content: Node[]): HTMLElement {
   return el('section', 'intro', el('div', 'intro-copy', ...content), el('div', 'intro-art'));
 }
 
+function randomnessGuide(): HTMLDialogElement {
+  const title = el('h2', '', 'Как устроена случайность');
+  title.id = 'randomness-guide-title';
+  const dialog = el('dialog', 'randomness-guide',
+    title,
+    el('p', 'helper', 'Игра сочетает реальные демографические данные с детерминированным случайным генератором. Решения меняют вероятности, но не устраняют случайность полностью.'),
+    el('div', 'odds-grid',
+      el('article', 'odds-card',
+        el('strong', '', 'Начало жизни'),
+        el('p', '', 'Страна выбирается по доле рождений среди 193 стран. Семья и достаток выпадают независимо от имени.'),
+        el('dl', 'odds-facts',
+          el('div', '', el('dt', '', 'Двое опекунов'), el('dd', '', '~72%')),
+          el('div', '', el('dt', '', 'Обычный достаток'), el('dd', '', '~65%')),
+          el('div', '', el('dt', '', 'Нужна поддержка со здоровьем'), el('dd', '', '~10%')))),
+      el('article', 'odds-card',
+        el('strong', '', 'Смертность'),
+        el('p', '', 'Ежемесячный риск берётся из таблиц ООН для страны, пола и возраста. В дальнейшие годы решение мало изменить этот базовый риск прямыми действиями.'),
+        el('dl', 'odds-facts',
+          el('div', '', el('dt', '', 'Умереть до 5 лет'), el('dd', '', '~3.7%')),
+          el('div', '', el('dt', '', 'Умереть до 18 лет'), el('dd', '', '~5%')),
+          el('div', '', el('dt', '', 'Дожить до 65 лет'), el('dd', '', '~72.7%')))),
+      el('article', 'odds-card',
+        el('strong', '', 'Серьёзное здоровье'),
+        el('p', '', 'Без обращения риск смертности у героя с тяжёлым состоянием начинается с ×2.5. Каждый полный год без помощи увеличивает множитель на 0.5, максимум — ×5.5.'),
+        el('p', 'helper', 'Восстановление и медицинская помощь могут вернуть состояние к поддерживаемому лечению.')),
+      el('article', 'odds-card',
+        el('strong', '', 'Психическое состояние'),
+        el('p', '', 'Тревога появляется после накопленного стресса и слабой поддержки. Потери, перегрузка, одиночество и повторяющиеся трудные события увеличивают накопленный стресс.'),
+        el('p', 'helper', 'Помощь близких, обращение за профессиональной поддержкой и снижение нагрузки могут ускорить восстановление.')),
+      el('article', 'odds-card',
+        el('strong', '', 'Решения и навыки'),
+        el('p', '', 'Учёба, общение и практика ежемесячно развивают навыки по выбранному плану. Трудные решения дают черты с конкретными бонусами к поступлению, работе и будущим шансам.'),
+        el('p', 'helper', 'План изменяет жизнь, но не гарантирует успех действия.')),
+      el('article', 'odds-card',
+        el('strong', '', 'Обычные и редкие события'),
+        el('p', '', 'Редкие встречи и воспоминания имеют шанс около 0.15% за подходящий месяц. Большинство обычных событий выбираются по возрасту, плану, окружению и недавней хронике.'),
+        el('p', 'helper', 'Повторные события блокируются на несколько месяцев, чтобы жизнь не превращалась в бесконечный повтор.'))),
+    el('section', 'odds-source',
+      el('h3', '', 'Источники и границы модели'),
+      el('p', '', `Демографическая база — UN World Population Prospects 2024, snapshot ${demographics.version}, базовый год ${demographics.year}. Это статистическая модель, а не медицинский или официальный прогноз конкретного человека.`),
+      el('p', '', 'Одни и те же имя и seed создают одинаковую последовательность случайных бросков. Новая жизнь с другим seed получает другой набор событий, хотя шансы остаются такими же.')),
+    el('div', 'turns', button('Закрыть', () => dialog.close(), 'quiet'))) as HTMLDialogElement;
+  dialog.setAttribute('aria-labelledby', title.id);
+  dialog.addEventListener('cancel', () => dialog.close());
+  return dialog;
+}
+
 export function startScreen(
   life: LifeSnapshot | null, resume: () => void, birth: () => void,
 ): HTMLElement {
@@ -17,14 +64,16 @@ export function startScreen(
   if (life) actions.append(button(life.status.type === 'dead' ? 'Открыть итог жизни' : 'Продолжить жизнь',
     resume, 'primary', 'resume'));
   actions.append(button('Новая жизнь', birth, life ? 'quiet' : 'primary', 'new-life'));
+  const guide = randomnessGuide();
+  actions.append(button('Как работают шансы', () => guide.showModal(), 'quiet', 'open-randomness-guide'));
   if (life) {
     const hint = el('p', 'helper', 'Новая жизнь откроет анкету. Чтобы заменить сохранение, нужно подтвердить замену.');
     const saved = el('p', 'saved', `Сохранено · ${life.birth.name} · ${ageLabel(life.ageInMonths)}`);
-    return intro(title, saved, actions, hint);
+    return el('div', 'start-screen', intro(title, saved, actions, hint), guide);
   }
-  return intro(title,
+  return el('div', 'start-screen', intro(title,
     el('p', 'lede', 'Создайте героя, проживайте месяцы или годы и принимайте решения по мере взросления. Игра сохраняет каждый ход.'),
-    actions);
+    actions), guide);
 }
 
 export function birthScreen(
