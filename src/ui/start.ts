@@ -60,20 +60,43 @@ export function startScreen(
   life: LifeSnapshot | null, resume: () => void, birth: () => void,
 ): HTMLElement {
   const title = heading('Целая жизнь впереди');
-  const actions = el('div', 'turns');
-  if (life) actions.append(button(life.status.type === 'dead' ? 'Открыть итог жизни' : 'Продолжить жизнь',
-    resume, 'primary', 'resume'));
-  actions.append(button('Новая жизнь', birth, life ? 'quiet' : 'primary', 'new-life'));
   const guide = randomnessGuide();
-  actions.append(button('Как работают шансы', () => guide.showModal(), 'quiet', 'open-randomness-guide'));
+  const guideAction = button('Как работают шансы', () => guide.showModal(), 'guide-entry', 'open-randomness-guide');
+
+  const story = el('section', 'home-story',
+    el('p', 'eyebrow', life ? 'Сохранённая история' : 'Новая история'),
+    title,
+    el('p', 'lede', life
+      ? 'Каждый выбор оставляет след. Вернитесь к жизни героя или начните другую историю с чистого листа.'
+      : 'Создайте героя, проживайте месяцы или годы и принимайте решения по мере взросления. Игра сохраняет каждый ход.'));
+
+  const status = life
+    ? el('div', 'saved-life',
+      el('p', 'saved-life-label', 'Сохранённая жизнь'),
+      el('p', 'saved-life-name', life.birth.name),
+      el('p', 'saved-life-meta', `${ageLabel(life.ageInMonths)} · ${life.status.type === 'dead' ? 'Жизнь завершена' : 'История продолжается'}`))
+    : el('div', 'saved-life saved-life-empty',
+      el('p', 'saved-life-label', 'Сохранённая жизнь'),
+      el('p', 'saved-life-name', 'Пока нет'),
+      el('p', 'saved-life-meta', 'Запустите первую жизнь'));
+
+  const actions = el('div', 'home-actions-list');
+  if (life) actions.append(button(life.status.type === 'dead' ? 'Открыть итог жизни' : 'Продолжить',
+    resume, 'primary', 'resume'));
+  actions.append(button('Новая жизнь', birth, life ? 'secondary' : 'primary', 'new-life'));
+
+  const actionCard = el('aside', 'home-action-card',
+    el('p', 'home-card-kicker', 'Продолжение'),
+    status,
+    actions,
+    el('div', 'odds-guide', el('span', '', 'Случайность'), guideAction));
+
   if (life) {
     const hint = el('p', 'helper', 'Новая жизнь откроет анкету. Чтобы заменить сохранение, нужно подтвердить замену.');
-    const saved = el('p', 'saved', `Сохранено · ${life.birth.name} · ${ageLabel(life.ageInMonths)}`);
-    return el('div', 'start-screen', intro(title, saved, actions, hint), guide);
+    actionCard.append(hint);
   }
-  return el('div', 'start-screen', intro(title,
-    el('p', 'lede', 'Создайте героя, проживайте месяцы или годы и принимайте решения по мере взросления. Игра сохраняет каждый ход.'),
-    actions), guide);
+  const dashboard = el('section', 'home-dashboard', story, actionCard);
+  return el('div', 'start-screen', dashboard, guide);
 }
 
 export function birthScreen(
