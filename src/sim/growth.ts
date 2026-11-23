@@ -5,6 +5,8 @@ export type Plan = (typeof plans)[number];
 export type Skill = 'academics' | 'creativity' | 'communication' | 'resilience' | 'practical' | 'empathy';
 export const careerPaths = ['technology', 'healthcare', 'trades', 'creative', 'public-service'] as const;
 export type CareerPath = (typeof careerPaths)[number];
+export const lifeProjects = ['shop', 'stall', 'cafe'] as const;
+export type LifeProject = (typeof lifeProjects)[number];
 
 export interface Development {
   readonly skills: Readonly<Record<Skill, number>>;
@@ -15,6 +17,8 @@ export interface Development {
   readonly employment: 'unemployed' | 'entry-level' | 'specialist' | 'retired';
   readonly career: CareerPath | null;
   readonly careerLevel: number;
+  readonly project: LifeProject | null;
+  readonly projectLevel: number;
   readonly funds: number;
   readonly nextAdmissionAge: number;
 }
@@ -29,6 +33,8 @@ export function initialDevelopment(means: HouseholdMeans): Development {
     employment: 'unemployed',
     career: null,
     careerLevel: 0,
+    project: null,
+    projectLevel: 0,
     funds: { limited: 2, moderate: 5, high: 10 }[means],
     nextAdmissionAge: 0,
   };
@@ -64,10 +70,12 @@ export function growMonth(development: Development): Development {
   const baseIncome = { unemployed: 0, 'entry-level': 1, specialist: 2, retired: 0 }[development.employment];
   const careerIncome = development.career && development.employment === 'specialist'
     ? 1 + development.careerLevel : 0;
-  const income = baseIncome + careerIncome;
+  const projectIncome = development.project ? 1 + development.projectLevel : 0;
+  const income = baseIncome + careerIncome + projectIncome;
   const next = development.plan ? grow(development, development.plan) : development;
   const careerLevel = next.career && next.employment === 'specialist' && next.careerLevel < 5
     ? next.careerLevel + 1 : next.careerLevel;
-  return income > 0 || careerLevel !== next.careerLevel
-    ? { ...next, funds: next.funds + income, careerLevel } : next;
+  const projectLevel = next.project && next.projectLevel < 5 ? next.projectLevel + 1 : next.projectLevel;
+  return income > 0 || careerLevel !== next.careerLevel || projectLevel !== next.projectLevel
+    ? { ...next, funds: next.funds + income, careerLevel, projectLevel } : next;
 }

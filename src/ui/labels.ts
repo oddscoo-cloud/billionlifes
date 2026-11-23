@@ -4,7 +4,7 @@ import { demographics } from '../data/demographics';
 import { worldScene } from '../data/world-event-variants';
 import { activities } from '../sim/actions';
 import type { ChildhoodChoice, LifeEvent, LifeStatus } from '../sim/life';
-import type { CareerPath, Plan } from '../sim/growth';
+import type { CareerPath, LifeProject, Plan } from '../sim/growth';
 
 export const planLabels: Record<Plan, string> = {
   study: 'Учёба', 'practice-art': 'Творчество', community: 'Общение', 'personal-care': 'Стиль и уход',
@@ -39,6 +39,11 @@ export const careerLabels: Record<CareerPath, string> = {
   trades: 'Ремесло и производство',
   creative: 'Творческие индустрии',
   'public-service': 'Государственная служба',
+};
+export const projectLabels: Record<LifeProject, string> = {
+  shop: 'Магазин',
+  stall: 'Лавка',
+  cafe: 'Кофейня',
 };
 
 export const skillLabels = {
