@@ -106,4 +106,14 @@ describe('development and actions', () => {
     expect(availableActions(dead)).toEqual([]);
     expect(setPlan(dead, 'study')).toBe(dead);
   });
+
+  it('lets a specialist choose a career path with growing income', () => {
+    const specialist = resolveAction(resolveAction({ ...adult(), randomState: 0 }, { id: 'vocational-training' }), { id: 'specialist-job' });
+    const career = availableActions(specialist).find(({ action }) => action.id === 'choose-career')!;
+    const chosen = resolveAction(specialist, career.action);
+    expect(chosen.development.career).toBe('technology');
+    expect(chosen.development.careerLevel).toBe(1);
+    const earned = advanceMonth(chosen);
+    expect(earned.development.funds).toBeGreaterThan(chosen.development.funds + 2);
+  });
 });

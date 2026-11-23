@@ -4,7 +4,7 @@ import { demographics } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
 import type { LifeEvent, LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
-import { ageLabel, educationLabels, employmentLabels, eventLabel, skillLabels } from './labels';
+import { ageLabel, careerLabels, educationLabels, employmentLabels, eventLabel, skillLabels } from './labels';
 import { characterPanel, chronicle, indicatorPanel, metric } from './play';
 
 function countriesLivedIn(life: LifeSnapshot): readonly string[] {
@@ -43,6 +43,7 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
     ['Страны проживания', countriesLivedIn(life).join(', ')],
     ['Образование', educationLabels[life.development.education]],
     ['Занятость', employmentLabels[life.development.employment]],
+    ...(life.development.career ? [['Карьерная траектория', `${careerLabels[life.development.career]} · уровень ${life.development.careerLevel}`] as const] : []),
   ]), el('p', 'helper', context));
   const skills = Object.entries(skillLabels).map(([key, label]) =>
     metric(label, life.development.skills[key as keyof typeof skillLabels]));

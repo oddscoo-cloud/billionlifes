@@ -3,6 +3,8 @@ import type { HouseholdMeans } from './birth';
 export const plans = ['study', 'practice-art', 'community', 'personal-care'] as const;
 export type Plan = (typeof plans)[number];
 export type Skill = 'academics' | 'creativity' | 'communication' | 'resilience' | 'practical' | 'empathy';
+export const careerPaths = ['technology', 'healthcare', 'trades', 'creative', 'public-service'] as const;
+export type CareerPath = (typeof careerPaths)[number];
 
 export interface Development {
   readonly skills: Readonly<Record<Skill, number>>;
@@ -11,6 +13,8 @@ export interface Development {
   readonly plan: Plan | null;
   readonly education: 'general' | 'vocational' | 'higher';
   readonly employment: 'unemployed' | 'entry-level' | 'specialist' | 'retired';
+  readonly career: CareerPath | null;
+  readonly careerLevel: number;
   readonly funds: number;
   readonly nextAdmissionAge: number;
 }
@@ -23,6 +27,8 @@ export function initialDevelopment(means: HouseholdMeans): Development {
     plan: null,
     education: 'general',
     employment: 'unemployed',
+    career: null,
+    careerLevel: 0,
     funds: { limited: 2, moderate: 5, high: 10 }[means],
     nextAdmissionAge: 0,
   };
@@ -55,9 +61,13 @@ export function grow(development: Development, plan: Plan, points = 1): Developm
 }
 
 export function growMonth(development: Development): Development {
-  const income = { unemployed: 0, 'entry-level': 1, specialist: 2, retired: 0 }[
-    development.employment
-  ];
+  const baseIncome = { unemployed: 0, 'entry-level': 1, specialist: 2, retired: 0 }[development.employment];
+  const careerIncome = development.career && development.employment === 'specialist'
+    ? 1 + development.careerLevel : 0;
+  const income = baseIncome + careerIncome;
   const next = development.plan ? grow(development, development.plan) : development;
-  return income > 0 ? { ...next, funds: next.funds + income } : next;
+  const careerLevel = next.career && next.employment === 'specialist' && next.careerLevel < 5
+    ? next.careerLevel + 1 : next.careerLevel;
+  return income > 0 || careerLevel !== next.careerLevel
+    ? { ...next, funds: next.funds + income, careerLevel } : next;
 }
