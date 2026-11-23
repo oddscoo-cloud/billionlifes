@@ -1,4 +1,4 @@
-import { demographics, sexes } from '../data/demographics';
+import { birthShare, demographics, sexes } from '../data/demographics';
 import type { Sex } from '../data/demographics';
 import type { LifeSnapshot } from '../sim/life';
 import { parentLabels } from '../sim/family';
@@ -70,6 +70,9 @@ export function birthScreen(
     info.replaceChildren(facts([
       ['Герой', birth.name],
       ['Страна рождения', demographics.countries[birth.countryOfBirth].name],
+      ['Шанс выпадения страны', `${(birthShare(birth.countryOfBirth) * 100).toLocaleString('ru-RU', {
+        minimumFractionDigits: 2, maximumFractionDigits: 4,
+      })}% по доле рождений`],
       ['Людей в семье', adults + family.olderSiblings + 1],
       ['Взрослые в семье', adultsDescription],
       ['Старшие братья и сёстры', family.olderSiblings],
@@ -79,7 +82,7 @@ export function birthScreen(
   }
   const back = button('К анкете', () => dialog.close(), 'quiet');
   back.autofocus = true;
-  dialog.append(el('p', 'helper', 'При перебросе имя и пол сохранятся.'),
+  dialog.append(el('p', 'helper', 'Шанс страны рассчитан по доле рождений в статистике ООН за базовый 2023 год. При перебросе имя и пол сохранятся.'),
     el('div', 'turns', back, button('Перебросить', roll, 'quiet'),
       button('Начать жизнь', () => { dialog.close(); start(draft); }, 'primary')));
   form.addEventListener('submit', (event) => {
