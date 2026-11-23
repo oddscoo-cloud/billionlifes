@@ -100,7 +100,7 @@ export function socialCircle(life: LifeSnapshot, commit?: (next: LifeSnapshot) =
     const description = el('div', '', el('p', '', relationshipDescriptions[person.id]),
       ...(person.id === 'friend' && person.role ? [el('p', 'helper', `Роль в жизни героя: ${friendRoleLabels[person.role]}.`)] : []));
     if (person.country) description.append(el('p', 'helper', `Место знакомства — ${demographics.countries[person.country].name}.`));
-    const content = [el('div', 'social-person', portrait(person.id), description), metric('Доверие', person.trust)];
+    const content = [el('div', 'social-person', portrait(person.id, person.country ?? life.birth.countryOfBirth, life.seed + person.id.length), description), metric('Доверие', person.trust)];
     const card = panel(person.id === 'caregiver' && life.parents.length ? 'Поддержка семьи' : peopleLabels[person.id], ...content, person.memories.length
       ? el('div', '', el('h3', '', 'Последние общие воспоминания'), memories)
       : el('p', 'helper', 'Общие воспоминания появятся по ходу жизни.'));

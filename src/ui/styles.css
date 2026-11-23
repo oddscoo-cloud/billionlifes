@@ -92,7 +92,7 @@ meter { display: block; width: 100%; block-size: 1rem; }
 meter::-webkit-meter-optimum-value { background: #9acfbb; border-radius: 1rem; }
 .person { display: flex; align-items: center; gap: .75rem; }
 .person > div { flex: 1; }
-.portrait { width: 3rem; height: 3rem; flex-shrink: 0; }
+.portrait { width: 3rem; height: 3rem; flex-shrink: 0; image-rendering: pixelated; shape-rendering: crispEdges; }
 .chronicle { list-style: none; margin: 0; padding: 0; }
 .chronicle li { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: .4rem; padding: .55rem 0; border-bottom: 1px solid var(--line); }
 .chronicle li:last-child { border-bottom: 0; }
