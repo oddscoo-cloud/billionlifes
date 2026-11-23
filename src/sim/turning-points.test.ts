@@ -51,3 +51,17 @@ it('learns a trait from repeated experience and uses it in university odds', () 
   expect(availableActions(prepared).find(({ action }) => action.id === 'apply-university')?.factors)
     .toContainEqual({ label: 'Настойчивость', contribution: 0.08 });
 });
+
+it('offers moral dilemmas with two materially different tradeoffs', () => {
+  const start = newborn();
+  const prompted = {
+    ...start,
+    ageInMonths: 30 * 12,
+    status: { type: 'decision', decision: 'turning-point', id: 'moral-whistleblowing' as const },
+  } as const;
+  expect(prompted.status.type).toBe('decision');
+  const first = resolveTurningPoint(prompted, 0);
+  const second = resolveTurningPoint(prompted, 1);
+  expect(first).not.toEqual(second);
+  expect(first.development.skills.resilience).not.toBe(second.development.skills.resilience);
+});
