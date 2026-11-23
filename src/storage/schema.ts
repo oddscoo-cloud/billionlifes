@@ -232,6 +232,9 @@ export function decodeSave(raw: unknown): SaveRecord {
       },
     };
   }
+  if (object(life) && life.demographicsVersion === 'wpp2024-2023-v1') {
+    life = { ...life, demographicsVersion: demographics.version };
+  }
   if (!integer(raw.revision, 1) || !validLife(life)) throw new InvalidSaveError('corrupt', raw);
   if (life.demographicsVersion !== demographics.version) throw new InvalidSaveError('data', raw);
   return { schemaVersion, revision: raw.revision, life };

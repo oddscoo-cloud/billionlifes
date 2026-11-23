@@ -43,9 +43,13 @@ export const activities = {
 } satisfies Record<Activity, string>;
 
 // Условные издержки переезда внутри модели, в единицах достатка.
-const moveCosts: Readonly<Record<CountryCode, number>> = {
+const moveCosts: Readonly<Partial<Record<CountryCode, number>>> = {
   UA: 4, IN: 3, NG: 3, MX: 5, BR: 5, AU: 8,
 };
+
+function moveCostFor(destination: CountryCode): number {
+  return moveCosts[destination] ?? 6;
+}
 
 const milestones: Readonly<Partial<Record<number, Milestone>>> = {
   [14 * 12]: 'teen-activity',
@@ -109,7 +113,7 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
   if (ageInMonths >= 65 * 12 && development.plan !== 'community') options.push(option('mentor'));
   if (ageInMonths >= 18 * 12) {
     for (const destination of countryCodes) {
-      const cost = moveCosts[destination];
+      const cost = moveCostFor(destination);
       if (destination !== countryOfResidence && development.funds >= cost) {
         options.push({
           action: { id: 'move', destination },

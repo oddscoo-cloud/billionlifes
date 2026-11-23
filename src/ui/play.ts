@@ -6,7 +6,7 @@ import { characterTraits, traitLabels } from '../sim/traits';
 import { resolveTurningPoint, turningPoints } from '../sim/turning-points';
 import { autoplayDelays } from './autoplay-delay';
 import type { AutoplayDelay } from './autoplay-delay';
-import { yearlyPrecipitation } from '../data/households';
+import { precipitationFor } from '../data/households';
 import { familySupport, griefChoices, resolveGrief } from '../sim/family';
 import { socialCircle } from './journal';
 import { worldScene } from '../data/world-event-variants';
@@ -58,7 +58,7 @@ function worldDetails(event: WorldEvent, life: LifeSnapshot): HTMLElement {
     return [el('span', value > 0 ? 'gain' : 'loss', `${label} ${signed.format(value)}`)];
   });
   const context = event.id.startsWith('rain') && event.country ? el('p', 'helper',
-    `Осадки в стране — в среднем ${yearlyPrecipitation[event.country]} мм в год по данным Всемирного банка.`) : null;
+    `Осадки в стране — в среднем ${precipitationFor(event.country)} мм в год по данным Всемирного банка.`) : null;
   const family = sibling ? el('p', 'helper', `Вместе с ${sibling.role === 'Брат' ? 'братом' : 'сестрой'}.`) : null;
   return el('div', 'world-details', el('p', 'helper', story), ...(family ? [family] : []),
     ...(changes.length ? [el('div', 'effects', ...changes)] : []), ...(context ? [context] : []));

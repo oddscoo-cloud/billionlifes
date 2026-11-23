@@ -1,8 +1,9 @@
 import { siblings } from './siblings';
 import { worldVariantCount } from '../data/world-event-variants';
-import { yearlyPrecipitation } from '../data/households';
+import { precipitationFor } from '../data/households';
 import type { CountryCode } from '../data/demographics';
 import { countryCodes } from '../data/demographics';
+import { countryRegion } from '../data/country-profiles';
 import type { EventEffect, WorldEventId } from '../data/world-events';
 import type { LifeEvent, LifeSnapshot } from './life';
 import { drawRandom } from './random';
@@ -52,6 +53,15 @@ const adolescentNegative: readonly EventChoice[] = [
   { id: 'financial-pressure-teen', mood: -7, funds: -1 },
   { id: 'loss-of-future-plan', mood: -6, skills: { resilience: -1 } },
 ];
+
+const regionalEvents: Readonly<Record<ReturnType<typeof countryRegion>, EventChoice>> = {
+  europe: { id: 'regional-transport', mood: -1, skills: { practical: 1 } },
+  asia: { id: 'regional-market', mood: 2, skills: { communication: 1 } },
+  africa: { id: 'regional-community', mood: 2, skills: { empathy: 1, communication: 1 } },
+  americas: { id: 'regional-holiday', mood: 2, skills: { creativity: 1 } },
+  oceania: { id: 'regional-season', mood: -1, skills: { resilience: 1 } },
+  'middle-east': { id: 'regional-harvest', mood: 1, skills: { practical: 1, empathy: 1 } },
+};
 
 function recentEvents(life: LifeSnapshot, months: number): readonly LifeEvent[] {
   const cutoff = life.ageInMonths - months;
@@ -124,6 +134,7 @@ function candidates(life: LifeSnapshot): EventChoice[] {
     return family;
   }
   const pool = [...everyday];
+  pool.push(regionalEvents[countryRegion(life.countryOfResidence)]);
   if (hasSibling) pool.push(ageInMonths < 18 * 12
     ? { id: 'sibling-project', mood: 2, skills: { creativity: 1, communication: 1 } }
     : { id: 'sibling-reunion', mood: 2, skills: { communication: 1 } });
@@ -210,7 +221,7 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   const rhythm = (ageInMonths + life.seed % 4) % 4;
   if (!followup && rhythm === 3) return life;
   // Annual precipitation is a weighting proxy, not an observed probability of rainy days.
-  const rainChance = yearlyPrecipitation[life.countryOfResidence] / 6500;
+  const rainChance = precipitationFor(life.countryOfResidence) / 6500;
   const wet = ageInMonths >= 48 && value < rainChance ? rainEvent(life) : undefined;
   const rare = !followup && value < rareEventChance ? rareEvent(life) : undefined;
   const draw = ageInMonths >= 48 && !wet ? (value - rainChance) / (1 - rainChance) : value;

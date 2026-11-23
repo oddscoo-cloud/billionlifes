@@ -1,9 +1,9 @@
 import snapshot from './wpp2024-2023.json';
 
-export const countryCodes = ['UA', 'IN', 'NG', 'MX', 'BR', 'AU'] as const;
 export const sexes = ['female', 'male'] as const;
 
-export type CountryCode = (typeof countryCodes)[number];
+export type CountryCode = keyof typeof snapshot.countries;
+export const countryCodes = Object.keys(snapshot.countries) as readonly CountryCode[];
 export type Sex = (typeof sexes)[number];
 
 export type MortalityBand =

@@ -4,9 +4,9 @@ import {
 } from './demographics';
 
 describe('birth weights', () => {
-  it('normalizes positive weights across all six countries', () => {
+  it('normalizes positive weights across all supported countries', () => {
     const shares = countryCodes.map(birthShare);
-    expect(shares).toHaveLength(6);
+    expect(shares).toHaveLength(193);
     expect(shares.every((share) => share > 0)).toBe(true);
     expect(shares.reduce((sum, share) => sum + share, 0)).toBeCloseTo(1, 12);
     expect(demographics.year).toBe(2023);
