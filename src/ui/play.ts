@@ -148,7 +148,7 @@ function goalsDialog(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLDi
       el('div', 'goal-progress',
         el('span', '', ''),
       ),
-      button(active ? 'Цель выбрана' : 'Поставить цель',
+      button(active ? 'Снять цель' : 'Поставить цель',
         () => commit(setGoal(life, id)), active ? 'quiet' : 'primary', `goal-${id}`));
     const bar = card.querySelector<HTMLElement>('.goal-progress span');
     if (bar) bar.style.width = `${progress}%`;
@@ -161,6 +161,7 @@ function goalsDialog(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLDi
     el('div', 'goal-grid', ...cards),
     el('div', 'turns', button('Закрыть', () => dialog.close(), 'quiet'))) as HTMLDialogElement;
   dialog.setAttribute('aria-labelledby', title.id);
+  dialog.addEventListener('cancel', () => dialog.close());
   return dialog;
 }
 
@@ -232,6 +233,7 @@ function achievementsDialog(life: LifeSnapshot): HTMLDialogElement {
           el('p', 'helper', item.description))))),
     el('div', 'turns', button('Закрыть', () => dialog.close(), 'quiet'))) as HTMLDialogElement;
   dialog.setAttribute('aria-labelledby', title.id);
+  dialog.addEventListener('cancel', () => dialog.close());
   return dialog;
 }
 

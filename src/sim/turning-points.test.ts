@@ -5,7 +5,7 @@ import { advanceAuto, advanceMonth, advanceYear, startLife } from './life';
 import type { LifeSnapshot } from './life';
 import { drawRandom } from './random';
 import { characterTraits } from './traits';
-import { advanceTurningPoint, resolveTurningPoint } from './turning-points';
+import { advanceTurningConsequences, advanceTurningPoint, resolveTurningPoint } from './turning-points';
 
 const newborn = () => startLife(createLife({ name: 'Мира', sex: 'female', seed: 42 }));
 
@@ -50,6 +50,22 @@ it('learns a trait from repeated experience and uses it in university odds', () 
   expect(characterTraits(prepared).map(({ id }) => id)).toEqual(['persistent']);
   expect(availableActions(prepared).find(({ action }) => action.id === 'apply-university')?.factors)
     .toContainEqual({ label: 'Настойчивость', contribution: 0.08 });
+});
+
+it('does not apply turning-point skills twice at the delayed consequence', () => {
+  const start = newborn();
+  const prompted: LifeSnapshot = {
+    ...start,
+    ageInMonths: 25 * 12,
+    status: { type: 'decision', decision: 'turning-point', id: 'work-mistake' },
+  };
+  const chosen = resolveTurningPoint(prompted, 0);
+  expect(chosen.development.skills.practical).toBe(2);
+  expect(chosen.development.skills.resilience).toBe(1);
+  const withChoice = { ...chosen, ageInMonths: 302 };
+  const consequence = advanceTurningConsequences(withChoice);
+  expect(consequence.development.skills.practical).toBe(2);
+  expect(consequence.development.skills.resilience).toBe(1);
 });
 
 it('offers moral dilemmas with two materially different tradeoffs', () => {

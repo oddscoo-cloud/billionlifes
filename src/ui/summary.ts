@@ -69,6 +69,7 @@ function lessonDialog(life: LifeSnapshot, navigation: SummaryNavigation): HTMLDi
       button('Закрыть', () => dialog.close(), 'quiet'),
       button('Вернуться в меню', () => { dialog.close(); navigation.home(); }, 'primary'))) as HTMLDialogElement;
   dialog.setAttribute('aria-labelledby', title.id);
+  dialog.addEventListener('cancel', () => dialog.close());
   return dialog;
 }
 
@@ -103,12 +104,16 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
         el('span', 'helper', `Основано на: ${version.basis}.`)))))
     : null;
   const lifeAchievements = achievements(life);
-  const achievementPanel = panel('Достижения',
-    el('p', 'achievement-count', `${lifeAchievements.filter((item) => item.unlocked).length} из ${lifeAchievements.length} открыто`),
-    el('div', 'achievement-grid', ...lifeAchievements.filter((item) => item.unlocked).map((item) =>
+  const unlockedAchievements = lifeAchievements.filter((item) => item.unlocked);
+  const achievementCards = unlockedAchievements.length
+    ? unlockedAchievements.map((item) =>
       el('article', 'achievement-card achievement-unlocked',
         el('span', 'achievement-mark', '✓'),
-        el('div', '', el('strong', '', item.title), el('p', 'helper', item.description))))));
+        el('div', '', el('strong', '', item.title), el('p', 'helper', item.description))))
+    : [el('p', 'helper', 'В этой жизни ни одно достижение пока не открыто. Новая жизнь даст новые возможности.')];
+  const achievementPanel = panel('Достижения',
+    el('p', 'achievement-count', `${unlockedAchievements.length} из ${lifeAchievements.length} открыто`),
+    el('div', 'achievement-grid', ...achievementCards));
   return el('div', '', profile, el('div', 'grid',
     el('div', 'stack', overview, milestones, ...(alternatePanel ? [alternatePanel] : []), chronicle(life, limit, navigation.more)),
     el('aside', 'stack', achievementPanel, indicatorPanel('Навыки', 'skills', ...skills), characterPanel(life), socialCircle(life))), lesson);

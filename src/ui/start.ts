@@ -45,10 +45,15 @@ export function birthScreen(
   submit.type = 'submit';
   const form = el('form', 'birth-form',
     el('label', 'field', 'Имя героя', name), el('label', 'field', 'Пол', sex));
+  form.noValidate = true;
+  let replaceConfirmation: HTMLInputElement | null = null;
   if (life) {
     const confirmation = el('input');
     confirmation.type = 'checkbox';
     confirmation.required = true;
+    confirmation.id = 'replace-confirmation';
+    confirmation.addEventListener('change', () => confirmation.setCustomValidity(''));
+    replaceConfirmation = confirmation;
     form.append(el('label', 'confirm', confirmation,
       `Заменить сохранённую жизнь героя «${life.birth.name}»`));
   }
@@ -59,6 +64,7 @@ export function birthScreen(
   info.setAttribute('aria-live', 'polite');
   const dialog = el('dialog', 'birth-preview', title, info);
   dialog.setAttribute('aria-labelledby', title.id);
+  dialog.addEventListener('cancel', () => dialog.close());
   let draft: LifeSnapshot;
   function roll(): void {
     draft = generate(name.value, sex.value as Sex);
@@ -90,6 +96,11 @@ export function birthScreen(
     if (!name.value.trim()) {
       name.setCustomValidity('Введите имя героя.');
       name.reportValidity();
+      return;
+    }
+    if (replaceConfirmation && !replaceConfirmation.checked) {
+      replaceConfirmation.setCustomValidity('Подтвердите замену сохранённой жизни.');
+      replaceConfirmation.reportValidity();
       return;
     }
     roll();

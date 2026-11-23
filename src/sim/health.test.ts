@@ -64,3 +64,18 @@ it('counts every month spent in a serious untreated state', () => {
   };
   expect(advancePhysicalHealth(serious).physicalHealth.months).toBe(12);
 });
+
+it('can turn a prolonged supported illness into chronic health', () => {
+  const life = startLife(createLife({ name: 'Лена', sex: 'female', seed: 23 }));
+  const recovering = {
+    ...life,
+    ageInMonths: 16 * 12,
+    physicalHealth: { condition: 'recovering' as const, severity: 1 as const, months: 3, supported: true },
+    chronicle: [...life.chronicle, {
+      type: 'world' as const, id: 'older-health' as const, ageInMonths: 191, effects: { mood: -3 },
+    }],
+  };
+  expect(advancePhysicalHealth(recovering).physicalHealth).toEqual({
+    condition: 'chronic', severity: 2, months: 0, supported: true,
+  });
+});

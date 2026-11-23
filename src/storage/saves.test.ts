@@ -10,6 +10,30 @@ import { LifeSession } from './session';
 
 const newborn = () => startLife(createLife({ name: 'Саша', sex: 'female', seed: 42 }));
 
+it('rejects malformed career and project action records', () => {
+  for (const action of [
+    { id: 'choose-career' },
+    { id: 'start-project' },
+  ]) {
+    const life = newborn();
+    const raw = {
+      schemaVersion: 6,
+      revision: 1,
+      life: {
+        ...life,
+        chronicle: [...life.chronicle, {
+          type: 'action',
+          ageInMonths: 20 * 12,
+          action,
+          succeeded: true,
+          chance: 1,
+        }],
+      },
+    };
+    expect(() => decodeSave(raw)).toThrow(InvalidSaveError);
+  }
+});
+
 it('restores a pending decision, the committed result and the exact next random draw', async () => {
   const factory = new IDBFactory();
   const store = await openSaves(factory);

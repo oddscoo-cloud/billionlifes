@@ -64,6 +64,21 @@ it('turns accumulated loss into a mental health pause and offers a recovery path
   expect(supported.chronicle.at(-1)).toMatchObject({ type: 'crisis' });
 });
 
+it('preserves existing mental-health state during the school crisis', () => {
+  const life = startLife(createLife({ name: 'Илья', sex: 'male', seed: 13 }));
+  const anxious: LifeSnapshot = {
+    ...life,
+    ageInMonths: 180,
+    wellbeing: {
+      ...life.wellbeing,
+      mentalHealth: { condition: 'anxiety', severity: 1, months: 4, supported: false },
+    },
+  };
+  expect(advanceWellbeing(anxious).wellbeing.mentalHealth).toEqual({
+    condition: 'anxiety', severity: 1, months: 4, supported: false,
+  });
+});
+
 it('can worsen an unsupported anxious state into depression', () => {
   const life = startLife(createLife({ name: 'Олег', sex: 'male', seed: 12 }));
   const stressed: LifeSnapshot = {

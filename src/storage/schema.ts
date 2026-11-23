@@ -132,8 +132,13 @@ function validEvent(event: Record<string, unknown>): boolean {
         && (event.choice === undefined || oneOf(event.choice, [...crisisChoices, ...mentalHealthChoices]));
     case 'action':
       return object(event.action)
-        && (event.action.id === 'move' ? oneOf(event.action.destination, countryCodes)
-          : oneOf(event.action.id, Object.keys(activities)))
+        && (event.action.id === 'move'
+          ? oneOf(event.action.destination, countryCodes)
+          : event.action.id === 'choose-career'
+            ? oneOf(event.action.career, careerPaths)
+            : event.action.id === 'start-project'
+              ? oneOf(event.action.project, lifeProjects)
+              : oneOf(event.action.id, Object.keys(activities)))
         && typeof event.succeeded === 'boolean'
         && typeof event.chance === 'number' && event.chance > 0 && event.chance <= 1;
     default: return false;
