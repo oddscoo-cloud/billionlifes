@@ -3,6 +3,8 @@ import type { WorldEventId } from '../data/world-events';
 
 export const closePersonIds = ['caregiver', 'friend', 'colleague', 'neighbor'] as const;
 export type ClosePersonId = (typeof closePersonIds)[number];
+export const friendRoles = ['friend', 'confidant', 'mentor', 'rival', 'distant'] as const;
+export type FriendRole = (typeof friendRoles)[number];
 
 export const memoryKinds = ['shared-reading', 'shared-play', 'club', 'volunteering', 'asked-for-help', 'shared-hardship', 'took-distance'] as const;
 
@@ -16,6 +18,7 @@ export interface Relationship {
   readonly trust: number;
   readonly country?: CountryCode;
   readonly memories: readonly Memory[];
+  readonly role?: FriendRole;
 }
 
 export function initialRelationships(): readonly Relationship[] {
@@ -32,6 +35,14 @@ export function remember(
     ...(place ? { country: place } : {}),
     trust: Math.max(0, Math.min(100, (person?.trust ?? 35) + trust)),
     memories: [...(person?.memories ?? []), memory],
+    ...(id === 'friend' ? { role: roleForTrust(Math.max(0, Math.min(100, (person?.trust ?? 35) + trust)), person?.role) } : {}),
   };
   return person ? relationships.map((entry) => entry.id === id ? next : entry) : [...relationships, next];
+}
+
+function roleForTrust(trust: number, previous?: FriendRole): FriendRole {
+  if (trust >= 80) return 'confidant';
+  if (trust <= 20) return 'distant';
+  if (previous === 'confidant' || previous === 'distant') return 'friend';
+  return previous ?? 'friend';
 }

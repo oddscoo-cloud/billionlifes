@@ -51,6 +51,13 @@ export const skillLabels = {
   resilience: 'Стойкость', practical: 'Практичность', empathy: 'Эмпатия',
 };
 export const peopleLabels = { caregiver: 'Опекун', friend: 'Друг детства', colleague: 'Коллега', neighbor: 'Сосед' };
+export const friendRoleLabels = {
+  friend: 'Друг',
+  confidant: 'Доверенное лицо',
+  mentor: 'Наставник',
+  rival: 'Соперник',
+  distant: 'Друг на расстоянии',
+} as const;
 export const phaseLabels = {
   none: 'Стабильное состояние', strain: 'Трудности в группе', withdrawn: 'Замкнутость',
   recovering: 'Восстановление', resolved: 'Кризис пройден',
