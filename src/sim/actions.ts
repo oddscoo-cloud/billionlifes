@@ -2,16 +2,18 @@ import { characterTraits, traitLabels } from './traits';
 import { countryCodes, demographics } from '../data/demographics';
 import type { CountryCode } from '../data/demographics';
 import { grow } from './growth';
-import type { Development, Plan } from './growth';
+import { careerPaths } from './growth';
+import type { CareerPath, Development, Plan } from './growth';
 import type { LifeSnapshot } from './life';
 import { remember } from './relationships';
 import { drawRandom } from './random';
 
 export type Milestone = 'teen-activity' | 'adult-path' | 'later-life';
 export type Activity = 'school-club' | 'volunteer' | 'apply-university' | 'vocational-training'
-  | 'entry-level-job' | 'specialist-job' | 'retire' | 'continue-working' | 'mentor' | 'personal-care';
+  | 'entry-level-job' | 'specialist-job' | 'choose-career' | 'retire' | 'continue-working' | 'mentor' | 'personal-care';
 
-export type LifeAction = { readonly id: Activity }
+export type LifeAction = { readonly id: Exclude<Activity, 'choose-career'> }
+  | { readonly id: 'choose-career'; readonly career: CareerPath }
   | { readonly id: 'move'; readonly destination: CountryCode };
 
 interface ChanceFactor {
@@ -36,6 +38,7 @@ export const activities = {
   'vocational-training': 'Получить профессиональную квалификацию',
   'entry-level-job': 'Устроиться на работу начального уровня',
   'specialist-job': 'Пройти собеседование на должность специалиста',
+  'choose-career': 'Выбрать карьерную траекторию',
   retire: 'Выйти на пенсию',
   'continue-working': 'Продолжить работать',
   mentor: 'Стать наставником',
@@ -61,7 +64,7 @@ export function milestoneAt(ageInMonths: number): Milestone | undefined {
   return milestones[ageInMonths];
 }
 
-function option(id: Activity, factors: readonly ChanceFactor[] = []): ActionOption {
+function option(id: Exclude<Activity, 'choose-career'>, factors: readonly ChanceFactor[] = []): ActionOption {
   const chance = factors.length === 0 ? 1
     : Math.max(0.05, Math.min(0.95, factors.reduce((sum, factor) => sum + factor.contribution, 0)));
   return { action: { id }, label: activities[id], chance, factors, cost: 0 };
@@ -97,6 +100,15 @@ export function availableActions(life: LifeSnapshot): readonly ActionOption[] {
     }
     if (development.education === 'general') options.push(option('vocational-training'));
     if (!stillJobSearching && development.employment === 'unemployed') options.push(option('entry-level-job'));
+    if (development.employment === 'specialist' && development.career === null) {
+      options.push(...careerPaths.map((career) => ({
+        action: { id: 'choose-career', career } as const,
+        label: `Выбрать траекторию: ${career}`,
+        chance: 1,
+        factors: [],
+        cost: 0,
+      })));
+    }
     if (!stillJobSearching && development.education !== 'general'
       && (development.employment === 'unemployed' || development.employment === 'entry-level')) {
       options.push(option('specialist-job', [
@@ -160,6 +172,8 @@ function success(life: LifeSnapshot, action: LifeAction, cost: number): Outcome 
       return { countryOfResidence, development: { ...development, employment: 'entry-level' } };
     case 'specialist-job':
       return { countryOfResidence, development: { ...development, employment: 'specialist' } };
+    case 'choose-career':
+      return { countryOfResidence, development: { ...development, career: action.career, careerLevel: 1 } };
     case 'retire':
       return { countryOfResidence, development: { ...development, employment: 'retired' } };
     default:

@@ -26,7 +26,7 @@ import {
 import type { LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import {
-  ageLabel, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
+  ageLabel, careerLabels, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
   mentalHealthLabels, mentalSeverityLabels, peopleLabels, phaseLabels, physicalHealthLabels, planLabels, skillLabels, wealthLabel,
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
@@ -334,6 +334,7 @@ export function play(
     ['Достаток', `${wealthLabel(life.development.funds)} · ${life.development.funds} ед.`],
     ['Образование', educationLabels[life.development.education]],
     ['Занятость', employmentLabels[life.development.employment]],
+    ...(life.development.career ? [['Карьерная траектория', `${careerLabels[life.development.career]} · уровень ${life.development.careerLevel}`] as const] : []),
   ]);
   const birth = el('details', '', el('summary', '', 'Условия при рождении'), facts([
     ['Людей в доме при рождении', family.olderSiblings + (family.caregivers === 'two-parents' ? 3 : 2)],
