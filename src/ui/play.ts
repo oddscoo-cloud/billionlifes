@@ -1,5 +1,5 @@
 import { siblings } from '../sim/siblings';
-import { healthStatus } from '../sim/health';
+import { healthStatus, seekMedicalCare } from '../sim/health';
 import { availableRomance, chooseRomance, romance, romanceLabels } from '../sim/romance';
 import type { RomanceAction } from '../sim/romance';
 import { characterTraits, traitLabels } from '../sim/traits';
@@ -27,7 +27,7 @@ import type { LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import {
   ageLabel, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
-  mentalHealthLabels, mentalSeverityLabels, peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
+  mentalHealthLabels, mentalSeverityLabels, peopleLabels, phaseLabels, physicalHealthLabels, planLabels, skillLabels, wealthLabel,
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
 import { innerVoice } from '../sim/inner-voice';
@@ -281,9 +281,14 @@ const romanceActions: Record<RomanceAction, string> = {
 function wellbeingPanel(life: LifeSnapshot, commit: PlayHandlers['commit']): HTMLElement {
   const health = healthStatus(life);
   const current = romance(life);
-  const section = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', phaseLabels[life.wellbeing.phase]),
-    metric('Настроение', life.wellbeing.mood), facts([['Здоровье', health.label]]),
-    el('p', 'helper', health.detail));
+  const moodLabel = life.wellbeing.mood <= 20 ? 'Очень низкое настроение'
+    : life.wellbeing.mood <= 40 ? 'Сниженное настроение' : phaseLabels[life.wellbeing.phase];
+  const section = indicatorPanel('Самочувствие', 'wellbeing', el('p', '', moodLabel),
+    metric('Настроение', life.wellbeing.mood), facts([
+      ['Здоровье', health.label],
+      ['Физическое состояние', physicalHealthLabels[life.physicalHealth.condition]],
+    ]),
+    el('p', 'helper', `${health.detail} Настроение отражает состояние сейчас, а психическое состояние — устойчивые изменения за несколько месяцев.`));
   const mental = life.wellbeing.mentalHealth ?? { condition: 'none' as const, severity: 0 as const };
   section.append(facts([['Психическое состояние', mentalHealthLabels[mental.condition]],
     ['Выраженность', mentalSeverityLabels[mental.severity]],
@@ -291,6 +296,10 @@ function wellbeingPanel(life: LifeSnapshot, commit: PlayHandlers['commit']): HTM
       ['Длительность', `${mental.months} мес.`] as const,
       ['Поддержка', mental.supported ? 'Есть' : 'Не подключена'] as const,
     ] : [])]));
+  if (life.physicalHealth.condition === 'serious') {
+    section.append(button('Обратиться за медицинской помощью',
+      () => commit(seekMedicalCare(life)), 'primary', 'seek-medical-care'));
+  }
   if (life.ageInMonths < 18 * 12) return section;
   if (!current) {
     section.append(facts([['Романтика', 'Пока нет']]));

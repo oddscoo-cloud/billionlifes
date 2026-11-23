@@ -13,6 +13,8 @@ import type { LifeAction, Milestone } from './actions';
 import type { NewLife } from './birth';
 import { advanceWellbeing } from './crisis';
 import type { CrisisChoice, MentalHealth, Wellbeing } from './crisis';
+import { adjustedMortality, advancePhysicalHealth, initialPhysicalHealth } from './health';
+import type { PhysicalHealth } from './health';
 import type { DiaryEntry } from './diary';
 import { advanceWorld } from './world';
 import type { WorldEvent } from './world';
@@ -62,6 +64,7 @@ export interface LifeSnapshot extends Omit<NewLife, 'ageInMonths'> {
   readonly status: LifeStatus;
   readonly development: Development;
   readonly wellbeing: Wellbeing;
+  readonly physicalHealth: PhysicalHealth;
   readonly relationships: readonly Relationship[];
   readonly parents: readonly Parent[];
   readonly diary: readonly DiaryEntry[];
@@ -75,6 +78,7 @@ export function startLife(newLife: NewLife): LifeSnapshot {
     parents: initialParents(newLife.birth.family, newLife.seed),
     wellbeing: { mood: 75, phase: 'none', monthsInPhase: 0, support: false,
       mentalHealth: { condition: 'none', severity: 0, months: 0, supported: false } satisfies MentalHealth },
+    physicalHealth: initialPhysicalHealth(newLife.birth.startingHealth),
     relationships: initialRelationships(),
     development: initialDevelopment(newLife.birth.family.means),
     countryOfResidence: newLife.birth.countryOfBirth,
@@ -86,7 +90,10 @@ export function startLife(newLife: NewLife): LifeSnapshot {
 export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
   if (life.status.type !== 'active') return life;
 
-  const mortality = monthlyMortality(life.countryOfResidence, life.birth.sex, life.ageInMonths);
+  const mortality = adjustedMortality(
+    monthlyMortality(life.countryOfResidence, life.birth.sex, life.ageInMonths),
+    life.physicalHealth,
+  );
   const roll = drawRandom(life.randomState);
   const ageInMonths = life.ageInMonths + 1;
   const next = { ...life, ageInMonths, randomState: roll.state };
@@ -111,11 +118,11 @@ export function advanceMonth(life: LifeSnapshot): LifeSnapshot {
 
   const development = growMonth(life.development);
   const milestone = milestoneAt(ageInMonths);
-  const stepped = advanceWellbeing({
+  const stepped = advanceWellbeing(advancePhysicalHealth({
     ...next,
     development,
     status: milestone ? { type: 'decision', decision: milestone } : next.status,
-  });
+  }));
   const withParents = advanceRelatives(advanceTurningConsequences(stepped));
   if (withParents.status.type !== 'active' || withParents.chronicle !== life.chronicle) return withParents;
   return advanceTurningPoint(advanceRomance(advanceWorld(withParents)));

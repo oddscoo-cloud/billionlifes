@@ -13,6 +13,7 @@ import type { LifeSnapshot } from '../sim/life';
 import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
 import { closePersonIds, memoryKinds } from '../sim/relationships';
+import { initialPhysicalHealth } from '../sim/health';
 
 export const schemaVersion = 5;
 
@@ -183,6 +184,11 @@ function validLife(value: unknown): value is LifeSnapshot {
     && integer(wellbeing.mood, 0, 100) && integer(wellbeing.monthsInPhase, 0, ageInMonths)
     && oneOf(wellbeing.phase, ['none', 'strain', 'withdrawn', 'recovering', 'resolved'])
     && typeof wellbeing.support === 'boolean'
+    && object(value.physicalHealth)
+    && oneOf(value.physicalHealth.condition, ['stable', 'recovering', 'chronic', 'serious'])
+    && integer(value.physicalHealth.severity, 0, 3)
+    && integer(value.physicalHealth.months, 0, ageInMonths)
+    && typeof value.physicalHealth.supported === 'boolean'
     && (wellbeing.mentalHealth === undefined || (object(wellbeing.mentalHealth)
       && oneOf(wellbeing.mentalHealth.condition, ['none', 'anxiety', 'depression', 'burnout', 'critical-risk', 'recovering'])
       && integer(wellbeing.mentalHealth.severity, 0, 3)
@@ -208,6 +214,9 @@ export function decodeSave(raw: unknown): SaveRecord {
       ...life,
       wellbeing: { ...life.wellbeing, mentalHealth: { condition: 'none', severity: 0, months: 0, supported: false } },
     };
+  }
+  if (object(life) && life.physicalHealth === undefined && validBirth(life.birth)) {
+    life = { ...life, physicalHealth: initialPhysicalHealth(life.birth.startingHealth) };
   }
   if (object(life) && object(life.development) && object(life.development.skills)) {
     life = {

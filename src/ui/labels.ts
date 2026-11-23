@@ -44,7 +44,7 @@ export const phaseLabels = {
   recovering: 'Восстановление', resolved: 'Кризис пройден',
 };
 export const mentalHealthLabels = {
-  none: 'Стабильное состояние',
+  none: 'Нет устойчивых признаков расстройства',
   anxiety: 'Тревожное состояние',
   depression: 'Депрессивное состояние',
   burnout: 'Истощение',
@@ -56,6 +56,12 @@ export const mentalSeverityLabels = {
   1: 'Лёгкая выраженность',
   2: 'Сильная выраженность',
   3: 'Критическая выраженность',
+} as const;
+export const physicalHealthLabels = {
+  stable: 'Стабильное',
+  recovering: 'Восстановление',
+  chronic: 'Хроническое состояние',
+  serious: 'Серьёзное ухудшение',
 } as const;
 
 export function ageLabel(months: number): string {
