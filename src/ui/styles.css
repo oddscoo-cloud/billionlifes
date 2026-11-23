@@ -508,3 +508,12 @@ button.guide-entry:hover { background: #9acfbb12; }
 }
 .lesson-dialog[open] { display: grid; gap: .85rem; }
 .lesson-dialog::backdrop { background: #0b0e11c9; }
+
+.feedback-entry-fields {
+  display: grid;
+  gap: .75rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
