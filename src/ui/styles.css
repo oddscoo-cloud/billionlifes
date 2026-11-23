@@ -312,3 +312,34 @@ textarea {
 .goal-progress { height: .42rem; overflow: hidden; border-radius: 1rem; background: #353b3e; }
 .goal-progress span { display: block; height: 100%; border-radius: 1rem; background: var(--accent); }
 @media (max-width: 37rem) { .goal-grid { grid-template-columns: minmax(0, 1fr); } }
+.achievements-dialog {
+  width: min(42rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  padding: clamp(.85rem, 4vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: inherit;
+}
+.achievements-dialog[open] { display: grid; gap: .85rem; }
+.achievements-dialog::backdrop { background: #0b0e11c9; }
+.achievement-count { color: var(--accent); font-weight: 700; }
+.achievement-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
+.achievement-card { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: .55rem; align-items: start; padding: .75rem; border: 1px solid var(--line); border-radius: .75rem; background: #171b1d; }
+.achievement-unlocked { border-color: #5d806f; }
+.achievement-locked { opacity: .58; }
+.achievement-mark { color: var(--accent); font-size: 1.35rem; line-height: 1; }
+@media (max-width: 37rem) { .achievement-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.lesson-dialog {
+  width: min(38rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  padding: clamp(.85rem, 4vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: inherit;
+}
+.lesson-dialog[open] { display: grid; gap: .85rem; }
+.lesson-dialog::backdrop { background: #0b0e11c9; }
