@@ -137,7 +137,7 @@ button.choice-card {
 .chance-factors { margin-block: 0; padding-inline-start: 1.2rem; }
 .notice.result:not(:empty) { margin-top: 1rem; }
 .notice.result:not(:empty) + main { margin-top: 1rem; }
-.turn-result { border-left: .2rem solid var(--accent); padding: .5rem .75rem; background: #1b1f21; }
+.turn-result { border-inline-start: .2rem solid var(--accent); padding: .5rem .75rem; background: #1b1f21; }
 @media (max-width: 40rem) {
   .turn-options, .choice-grid { grid-template-columns: minmax(0, 1fr); }
 }
@@ -223,7 +223,7 @@ body:has(.dashboard) .masthead { padding-block: .5rem; }
 .profile-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
 .profile-actions button { padding-inline: .75rem; }
 .profile .profile-actions { flex-shrink: 0; }
-.world-spotlight { border-left: 2px solid var(--accent); }
+.world-spotlight { border-inline-start: 2px solid var(--accent); }
 .world-kicker { color: var(--accent); font-size: .875rem; }
 .world-details, .diary-form, .journal-screen { display: grid; gap: .6rem; }
 .world-entry { min-width: 0; }

@@ -16,7 +16,7 @@ import { birthScreen, startScreen } from './ui/start';
 import { summary } from './ui/summary';
 import './ui/styles.css';
 import { feedbackDialog } from './ui/feedback-dialog';
-import { getLanguage, languages, setLanguage, translate } from './ui/i18n';
+import { getLanguage, languages, setLanguage, translate, tr } from './ui/i18n';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 const notice = el('div', 'notice');
@@ -27,10 +27,9 @@ const masthead = document.querySelector<HTMLElement>('.masthead');
 if (masthead) {
   const controls = el('div', 'masthead-controls');
   const language = el('select', 'language-select');
-  language.setAttribute('aria-label', 'Язык игры');
+  language.setAttribute('aria-label', tr('Язык игры'));
   language.append(...languages.map(([code, label]) => new Option(label, code)));
   language.value = getLanguage();
-  setLanguage(language.value as (typeof languages)[number][0]);
   language.addEventListener('change', () => {
     setLanguage(language.value as (typeof languages)[number][0]);
     location.reload();
@@ -50,17 +49,17 @@ async function initialize(): Promise<void> {
   } catch (error) {
     const damaged = error instanceof InvalidSaveError;
     const description = damaged ? {
-      corrupt: 'Сохранение повреждено.',
-      version: 'Эта версия игры не может открыть сохранение. Попробуйте версию игры, создавшую его.',
-      data: 'Сохранение использует другой набор демографических данных.',
-    }[error.reason] : 'Хранилище браузера недоступно. Проверьте настройки браузера и повторите попытку.';
-    const actions = el('div', 'turns', button('Повторить загрузку', () => location.reload(), 'primary'));
-    if (damaged) actions.append(button('Скачать копию сохранения', () => {
+      corrupt: tr('Сохранение повреждено.'),
+      version: tr('Эта версия игры не может открыть сохранение. Попробуйте версию игры, создавшую его.'),
+      data: tr('Сохранение использует другой набор демографических данных.'),
+    }[error.reason] : tr('Хранилище браузера недоступно. Проверьте настройки браузера и повторите попытку.');
+    const actions = el('div', 'turns', button(tr('Повторить загрузку'), () => location.reload(), 'primary'));
+    if (damaged) actions.append(button(tr('Скачать копию сохранения'), () => {
       const seen = new WeakSet<object>();
       const json = JSON.stringify(error.raw, (_key, value: unknown) => {
         if (typeof value === 'bigint') return String(value);
         if (value && typeof value === 'object') {
-          if (seen.has(value)) return '[Повторная ссылка]';
+          if (seen.has(value)) return tr('[Повторная ссылка]');
           seen.add(value);
         }
         return value;
@@ -72,7 +71,7 @@ async function initialize(): Promise<void> {
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, 'quiet'));
-    app.replaceChildren(panel('Загрузка жизни', el('p', '', description), actions));
+    app.replaceChildren(panel(tr('Загрузка жизни'), el('p', '', description), actions));
   }
 }
 
@@ -142,13 +141,13 @@ function mount(session: LifeSession): void {
     busy = true;
     app.inert = true;
     notice.classList.remove('result');
-    notice.replaceChildren('Сохранение…');
+    notice.replaceChildren(tr('Сохранение…'));
     try {
       await session.commit(next);
       selected = null;
       screen = destination;
       if (next.status.type !== 'active') stopAutoplay();
-      const result = el('p', 'turn-result', destination === 'diary' ? 'Запись добавлена в дневник.' : turnFeedback(previous, next));
+      const result = el('p', 'turn-result', destination === 'diary' ? tr('Запись добавлена в дневник.') : turnFeedback(previous, next));
       notice.replaceChildren(result);
       notice.classList.add('result');
       const focus = destination === 'diary' ? 'diary-text' : next.status.type === 'decision' ? 'turn-title'
@@ -161,14 +160,14 @@ function mount(session: LifeSession): void {
     } catch (error) {
       stopAutoplay();
       const autoButton = document.getElementById('autoplay');
-      if (autoButton) autoButton.textContent = 'Включить автоход';
+      if (autoButton) autoButton.textContent = tr('Включить автоход');
       if (error instanceof SaveConflictError) {
-        const reload = button('Загрузить актуальную жизнь', () => location.reload(), 'quiet');
-        notice.replaceChildren('Другая вкладка обновила сохранение. ', reload);
+        const reload = button(tr('Загрузить актуальную жизнь'), () => location.reload(), 'quiet');
+        notice.replaceChildren(tr('Другая вкладка обновила сохранение. '), reload);
         reload.focus();
       } else {
-        const retry = button('Повторить запись', () => void commit(next, destination), 'quiet');
-        notice.replaceChildren('Не удалось сохранить ход. Текущая жизнь сохранена в прежнем состоянии. ', retry);
+        const retry = button(tr('Повторить запись'), () => void commit(next, destination), 'quiet');
+        notice.replaceChildren(tr('Не удалось сохранить ход. Текущая жизнь сохранена в прежнем состоянии. '), retry);
         retry.focus();
       }
     } finally {

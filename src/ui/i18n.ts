@@ -9,12 +9,13 @@ export type Language = (typeof languages)[number][0];
 const storageKey = 'beyond-birth-language';
 
 export function getLanguage(): Language {
-  const saved = localStorage.getItem(storageKey);
+  let saved: string | null = null;
+  try { saved = localStorage.getItem(storageKey); } catch { /* Use the default. */ }
   return languages.some(([code]) => code === saved) ? saved as Language : 'ru';
 }
 
 export function setLanguage(language: Language): void {
-  localStorage.setItem(storageKey, language);
+  try { localStorage.setItem(storageKey, language); } catch { /* The current page can still render. */ }
   document.documentElement.lang = language;
   document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
 }
@@ -60,5 +61,29 @@ const common: Record<Language, Record<string, string>> = {
 
 export function translate(key: string, fallback = ''): string {
   const language = getLanguage();
-  return common[language][key] ?? (language === 'ru' ? fallback : common.en[key] ?? fallback);
+  return common[language][key] ?? tr(fallback);
+}
+
+const catalogs = import.meta.glob<Record<string, string>>('./locales/*.json', { import: 'default' });
+let catalog: Record<string, string> = {};
+
+export async function loadTranslations(language: Language): Promise<void> {
+  if (language === 'ru') {
+    catalog = {};
+    return;
+  }
+  catalog = await catalogs[`./locales/${language}.json`]?.() ?? {};
+}
+
+/** Translate game-authored text. Template values (for example, player names) pass through unchanged. */
+export function tr(message: string): string;
+export function tr(message: TemplateStringsArray, ...values: unknown[]): string;
+export function tr(message: string | TemplateStringsArray, ...values: unknown[]): string {
+  if (typeof message === 'string') {
+    if (!Object.hasOwn(catalog, message)) return message;
+    return (message.match(/^\s*/)?.[0] ?? '') + catalog[message]! + (message.match(/\s*$/)?.[0] ?? '');
+  }
+  const key = message.reduce((text, part, index) => text + (index ? `{${index - 1}}` : '') + part, '');
+  return tr(key).replace(/\{(\d+)\}/g, (token, index: string) =>
+    Number(index) < values.length ? String(values[Number(index)]) : token);
 }
