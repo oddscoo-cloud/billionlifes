@@ -14,8 +14,9 @@ import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
 import { closePersonIds, friendRoles, memoryKinds } from '../sim/relationships';
 import { initialPhysicalHealth } from '../sim/health';
+import { goalIds } from '../sim/goals';
 
-export const schemaVersion = 5;
+export const schemaVersion = 6;
 
 export interface SaveRecord {
   readonly schemaVersion: typeof schemaVersion;
@@ -154,6 +155,13 @@ function validChronicle(value: unknown, age: number, status: unknown, siblingCou
   return status !== 'dead' || value.at(-1)?.type === 'death';
 }
 
+function validGoals(value: unknown): boolean {
+  if (value === undefined) return true;
+  return Array.isArray(value) && value.length <= 3
+    && value.every((goal: unknown) => object(goal) && oneOf(goal.id, goalIds) && integer(goal.startedAt))
+    && new Set(value.map((goal) => goal.id)).size === value.length;
+}
+
 function validLife(value: unknown): value is LifeSnapshot {
   if (!object(value)) return false;
   const { ageInMonths, status, wellbeing } = value;
@@ -183,7 +191,7 @@ function validLife(value: unknown): value is LifeSnapshot {
         || last.id !== status.id || last.ageInMonths !== ageInMonths) return false;
     } else if (!ordinary(status.decision)) return false;
   }
-  return validBirth(value.birth) && oneOf(value.countryOfResidence, countryCodes)
+  return validBirth(value.birth) && validGoals(value.goals) && oneOf(value.countryOfResidence, countryCodes)
     && integer(value.seed, 0, 0xffff_ffff) && integer(value.randomState, 0, 0xffff_ffff)
     && validDevelopment(value.development) && validRelationships(value.relationships, ageInMonths)
     && integer(wellbeing.mood, 0, 100) && integer(wellbeing.monthsInPhase, 0, ageInMonths)
@@ -207,6 +215,9 @@ export function decodeSave(raw: unknown): SaveRecord {
 
   if (raw.schemaVersion > schemaVersion) throw new InvalidSaveError('version', raw);
   let life = raw.life;
+  if (raw.schemaVersion < 6 && object(life)) {
+    life = { ...life, goals: [] };
+  }
   if (raw.schemaVersion < 3 && object(life) && validBirth(life.birth) && integer(life.seed, 0, 0xffff_ffff)) {
     life = { ...life, parents: initialParents(life.birth.family, life.seed), ...(raw.schemaVersion === 1 ? { diary: [] } : {}) };
   }

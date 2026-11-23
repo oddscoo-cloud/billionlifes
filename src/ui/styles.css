@@ -291,3 +291,24 @@ textarea {
 .sibling-card button { justify-self: start; }
 .romance-actions[open] { display: grid; gap: .4rem; }
 .romance-actions button { width: 100%; margin-top: .3rem; padding: .4rem .55rem; }
+
+.goals-dialog {
+  width: min(46rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  padding: clamp(.85rem, 4vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: inherit;
+}
+.goals-dialog[open] { display: grid; gap: .85rem; }
+.goals-dialog::backdrop { background: #0b0e11c9; }
+.goal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.goal-card { display: grid; gap: .55rem; padding: .8rem; border: 1px solid var(--line); border-radius: .75rem; background: #171b1d; }
+.goal-card.goal-active { border-color: var(--accent); box-shadow: inset 0 0 0 1px #9acfbb22; }
+.goal-card-head { display: flex; justify-content: space-between; gap: .5rem; }
+.goal-percent { color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+.goal-progress { height: .42rem; overflow: hidden; border-radius: 1rem; background: #353b3e; }
+.goal-progress span { display: block; height: 100%; border-radius: 1rem; background: var(--accent); }
+@media (max-width: 37rem) { .goal-grid { grid-template-columns: minmax(0, 1fr); } }
