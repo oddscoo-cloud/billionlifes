@@ -8,7 +8,7 @@ import type { BirthConditions } from '../sim/birth';
 import { countryCodes, demographics, sexes } from '../data/demographics';
 import { activities, milestoneAt } from '../sim/actions';
 import { crisisChoices, mentalHealthChoices } from '../sim/crisis';
-import { careerPaths, plans } from '../sim/growth';
+import { careerPaths, lifeProjects, plans } from '../sim/growth';
 import type { LifeSnapshot } from '../sim/life';
 import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
@@ -66,6 +66,8 @@ function validDevelopment(value: unknown): boolean {
     && oneOf(value.employment, ['unemployed', 'entry-level', 'specialist', 'retired'])
     && (value.career === null || oneOf(value.career, careerPaths))
     && integer(value.careerLevel, 0, 5)
+    && (value.project === null || oneOf(value.project, lifeProjects))
+    && integer(value.projectLevel, 0, 5)
     && integer(value.funds) && integer(value.nextAdmissionAge);
 }
 
@@ -209,7 +211,7 @@ export function decodeSave(raw: unknown): SaveRecord {
   }
   if (raw.schemaVersion < schemaVersion && object(life) && object(life.development)) {
     const { character: _obsolete, ...development } = life.development;
-    life = { ...life, development: { career: null, careerLevel: 0, ...development } };
+    life = { ...life, development: { career: null, careerLevel: 0, project: null, projectLevel: 0, ...development } };
   }
   if (object(life) && object(life.wellbeing) && life.wellbeing.mentalHealth === undefined) {
     life = {

@@ -116,4 +116,13 @@ describe('development and actions', () => {
     const earned = advanceMonth(chosen);
     expect(earned.development.funds).toBeGreaterThan(chosen.development.funds + 2);
   });
+
+  it('starts a large project, connects a colleague and adds project income', () => {
+    const life = { ...adult(), ageInMonths: 25 * 12, development: { ...adult().development, funds: 20 } };
+    const option = availableActions(life).find(({ action }) => action.id === 'start-project')!;
+    const started = resolveAction(life, option.action);
+    expect(started.development.project).toBe('shop');
+    expect(started.relationships.some(({ id }) => id === 'colleague')).toBe(true);
+    expect(advanceMonth(started).development.funds).toBeGreaterThan(started.development.funds);
+  });
 });
