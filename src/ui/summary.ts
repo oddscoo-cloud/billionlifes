@@ -6,6 +6,7 @@ import type { LifeEvent, LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import { ageLabel, careerLabels, educationLabels, employmentLabels, eventLabel, projectLabels, skillLabels } from './labels';
 import { characterPanel, chronicle, indicatorPanel, metric } from './play';
+import { alternateLives } from '../sim/alternate-lives';
 
 function countriesLivedIn(life: LifeSnapshot): readonly string[] {
   const countries = new Set<CountryCode>([life.birth.countryOfBirth]);
@@ -51,7 +52,14 @@ export function summary(life: LifeSnapshot, limit: number, navigation: SummaryNa
   const events = life.chronicle.filter(keyEvent).slice(-10);
   const milestones = panel('Ключевые события', el('ol', 'chronicle', ...events.map((event) =>
     el('li', '', el('span', 'event-age', ageLabel(event.ageInMonths)), el('span', '', eventLabel(event))))));
+  const alternatives = alternateLives(life);
+  const alternatePanel = alternatives.length
+    ? panel('Альтернативные версии', el('p', 'helper', 'Это не предсказания, а честные варианты того, как могли измениться последствия ключевых решений.'),
+      el('ul', '', ...alternatives.map((version) => el('li', '',
+        el('strong', '', version.title), el('p', '', version.description),
+        el('span', 'helper', `Основано на: ${version.basis}.`)))))
+    : null;
   return el('div', '', profile, el('div', 'grid',
-    el('div', 'stack', overview, milestones, chronicle(life, limit, navigation.more)),
+    el('div', 'stack', overview, milestones, ...(alternatePanel ? [alternatePanel] : []), chronicle(life, limit, navigation.more)),
     el('aside', 'stack', indicatorPanel('Навыки', 'skills', ...skills), characterPanel(life), socialCircle(life))));
 }
