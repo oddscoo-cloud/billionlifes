@@ -68,7 +68,7 @@ async function initialize(): Promise<void> {
       const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
       const link = el('a');
       link.href = url;
-      link.download = 'billionlifes-save.json';
+      link.download = 'beyond-birth-save.json';
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, 'quiet'));
