@@ -71,7 +71,7 @@ export function birthScreen(
       ['Герой', birth.name],
       ['Страна рождения', demographics.countries[birth.countryOfBirth].name],
       ['Шанс выпадения страны', `${(birthShare(birth.countryOfBirth) * 100).toLocaleString('ru-RU', {
-        minimumFractionDigits: 2, maximumFractionDigits: 4,
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
       })}% по доле рождений`],
       ['Людей в семье', adults + family.olderSiblings + 1],
       ['Взрослые в семье', adultsDescription],
