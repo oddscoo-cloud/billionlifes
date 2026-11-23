@@ -365,6 +365,34 @@ export const turningPoints = {
         skills: { resilience: -1 } },
     ],
   },
+  'moral-whistleblowing': {
+    title: 'Нарушение на работе',
+    story: 'Герой заметил, что в отчётах скрывают проблему. Если рассказать правду, пострадают коллеги и проект. Если промолчать, риск останется.',
+    responses: [
+      { label: 'Сообщить о проблеме', hint: 'Доверие к герою может вырасти, но карьерный путь временно замедлится.',
+        outcome: 'Герой сообщил о нарушении и настоял на проверке.', immediate: [-4, -1],
+        followup: 'Проверка заняла время. Ошибку исправили, но не все коллеги простили вмешательство.', later: [4, 0],
+        trait: 'careful', skills: { resilience: 1, practical: 1 } },
+      { label: 'Остаться в стороне', hint: 'Работа продолжится без конфликта, но герой будет помнить о своём молчании.',
+        outcome: 'Герой решил не вмешиваться и сосредоточился на своей части работы.', immediate: [1, 0],
+        followup: 'Проблема проявилась позже. Герой сохранил место, но стал меньше доверять коллективу.', later: [-3, 1],
+        trait: 'independent', skills: { resilience: -1 } },
+    ],
+  },
+  'moral-family-time': {
+    title: 'Помощь семье или важный шанс',
+    story: 'Близкому нужна регулярная помощь именно тогда, когда герою предлагают участие в важном проекте.',
+    responses: [
+      { label: 'Выбрать помощь семье', hint: 'Шанс может не повториться, зато близкий не останется один.',
+        outcome: 'Герой отказался от части проекта и освободил время для семьи.', immediate: [-2, 0],
+        followup: 'Проект завершили без героя, но близкий почувствовал, что на него можно положиться.', later: [6, 0],
+        trait: 'supportive', skills: { empathy: 2 } },
+      { label: 'Принять участие в проекте', hint: 'Дополнительные возможности улучшат будущее, но сейчас помощи будет меньше.',
+        outcome: 'Герой принял предложение и договорился о посильной помощи семье.', immediate: [-5, 2],
+        followup: 'Проект открыл новые связи. Семье пришлось искать поддержку ещё у нескольких людей.', later: [2, 1],
+        trait: 'persistent', skills: { practical: 1 } },
+    ],
+  },
 } as const satisfies Record<string, Scenario>;
 
 export type TurningPointId = keyof typeof turningPoints;
@@ -401,6 +429,8 @@ export function advanceTurningPoint(life: LifeSnapshot): LifeSnapshot {
   if (previous.some((event) => event.type === 'romance' && event.step === 'end'
     && event.ageInMonths === age - 1)) candidates.push('relationship-breakup');
   if (age >= 65 * 12) candidates.push('changing-routine');
+  if (age >= 25 * 12 && employed) candidates.push('moral-whistleblowing');
+  if (age >= 25 * 12 && life.parents.some(({ diedAt }) => diedAt === undefined)) candidates.push('moral-family-time');
   if (recentWorld.some((event) => event.type === 'world' && event.id === 'move-paperwork' && event.ageInMonths === age - 2)) {
     candidates.push('unfamiliar-city');
   }
