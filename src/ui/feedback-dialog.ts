@@ -1,5 +1,5 @@
 import { button, el } from './elements';
-import { translate } from './i18n';
+import { translate, tr } from './i18n';
 
 export const feedbackEmail = 'support@beyondbirth';
 
@@ -15,6 +15,8 @@ export function feedbackDialog(): HTMLDialogElement {
     new Option(translate('feedback-question', 'Вопрос'), 'Вопрос'),
     new Option(translate('feedback-other', 'Другое'), 'Другое'),
   );
+
+  const categoryLabel = () => category.selectedOptions[0]?.label ?? '';
 
   const name = el('input');
   name.id = 'feedback-name';
@@ -49,7 +51,7 @@ export function feedbackDialog(): HTMLDialogElement {
       el('label', 'field', translate('feedback-name', 'Имя'), name),
       el('label', 'field', translate('feedback-contact', 'Почта для ответа'), contact)),
     el('label', 'field', translate('feedback-message', 'Сообщение'), message),
-    el('p', 'helper', `${translate('feedback-hint', 'Мы сформируем письмо в вашем почтовом приложении')} для ${feedbackEmail}. Письмо не отправляется автоматически: откройте приложение и нажмите «Отправить».`));
+    el('p', 'helper', tr`${feedbackEmail} — письмо не отправляется автоматически. Откройте почтовое приложение и нажмите «Отправить».`));
 
   form.noValidate = true;
   form.addEventListener('submit', (event) => {
@@ -58,68 +60,68 @@ export function feedbackDialog(): HTMLDialogElement {
 
   const dialog = el('dialog', 'feedback-dialog',
     title,
-    el('p', 'lede', 'Помогите улучшить игру: предложение, баг или заметка о том, что не работает.'),
+    el('p', 'lede', tr('Помогите улучшить игру: предложение, баг или заметка о том, что не работает.')),
     form,
     status,
     el('div', 'turns',
       button(translate('feedback-cancel', 'Отмена'), () => dialog.close(), 'quiet'),
-      button('Скопировать текст', copyPreparedFeedback, 'quiet', 'copy-feedback'),
+      button(tr('Скопировать текст'), copyPreparedFeedback, 'quiet', 'copy-feedback'),
       button(translate('feedback-submit', 'Открыть письмо'), submitFeedback, 'primary', 'submit-feedback'))) as HTMLDialogElement;
 
   async function copyPreparedFeedback(): Promise<void> {
     const text = message.value.trim();
     if (text.length < 10) {
-      message.setCustomValidity('Опишите обращение минимум 10 символами.');
+      message.setCustomValidity(tr('Опишите обращение минимум 10 символами.'));
       message.reportValidity();
       return;
     }
-    preparedSubject = `[Beyond Birth] ${category.value}${name.value.trim() ? ` · ${name.value.trim()}` : ''}`;
+    preparedSubject = `[Beyond Birth] ${categoryLabel()}${name.value.trim() ? ` · ${name.value.trim()}` : ''}`;
     preparedBody = [
-      `Тип: ${category.value}`,
-      name.value.trim() ? `Имя: ${name.value.trim()}` : '',
-      contact.value.trim() ? `Почта для ответа: ${contact.value.trim()}` : '',
+      tr`Тип: ${categoryLabel()}`,
+      name.value.trim() ? tr`Имя: ${name.value.trim()}` : '',
+      contact.value.trim() ? tr`Почта для ответа: ${contact.value.trim()}` : '',
       '',
       text,
       '',
-      `Страница: ${location.href}`,
-      `Платформа: ${navigator.platform}`,
+      tr`Страница: ${location.href}`,
+      tr`Платформа: ${navigator.platform}`,
     ].filter(Boolean).join('\n');
     try {
-      await navigator.clipboard.writeText(`Кому: ${feedbackEmail}\nТема: ${preparedSubject}\n\n${preparedBody}`);
-      status.textContent = 'Адрес, тема и текст скопированы. Вставьте их в любое почтовое приложение.';
+      await navigator.clipboard.writeText(tr`Кому: ${feedbackEmail}\nТема: ${preparedSubject}\n\n${preparedBody}`);
+      status.textContent = tr('Адрес, тема и текст скопированы. Вставьте их в любое почтовое приложение.');
     } catch {
-      status.textContent = `Скопируйте вручную. Адрес: ${feedbackEmail}`;
+      status.textContent = tr`Скопируйте вручную. Адрес: ${feedbackEmail}`;
     }
   }
 
   function submitFeedback(): void {
     const text = message.value.trim();
     if (text.length < 10) {
-      message.setCustomValidity('Опишите обращение минимум 10 символами.');
+      message.setCustomValidity(tr('Опишите обращение минимум 10 символами.'));
       message.reportValidity();
       return;
     }
     if (contact.value && !contact.checkValidity()) {
-      contact.setCustomValidity('Введите корректный адрес электронной почты.');
+      contact.setCustomValidity(tr('Введите корректный адрес электронной почты.'));
       contact.reportValidity();
       return;
     }
     contact.setCustomValidity('');
     const author = name.value.trim();
     const email = contact.value.trim();
-    const subject = `[Beyond Birth] ${category.value}${author ? ` · ${author}` : ''}`;
+    const subject = `[Beyond Birth] ${categoryLabel()}${author ? ` · ${author}` : ''}`;
     const body = [
-      `Тип: ${category.value}`,
-      author ? `Имя: ${author}` : '',
-      email ? `Почта для ответа: ${email}` : '',
+      tr`Тип: ${categoryLabel()}`,
+      author ? tr`Имя: ${author}` : '',
+      email ? tr`Почта для ответа: ${email}` : '',
       '',
       text,
       '',
-      `Страница: ${location.href}`,
-      `Платформа: ${navigator.platform}`,
-      `Браузер: ${navigator.userAgent}`,
+      tr`Страница: ${location.href}`,
+      tr`Платформа: ${navigator.platform}`,
+      tr`Браузер: ${navigator.userAgent}`,
     ].filter(Boolean).join('\n');
-    status.textContent = 'Почтовое приложение открыто для черновика. Нажмите «Отправить» в приложении; если окна не появилось, используйте «Скопировать текст».';
+    status.textContent = tr('Почтовое приложение открыто для черновика. Нажмите «Отправить» в приложении; если окна не появилось, используйте «Скопировать текст».');
     location.href = `mailto:${feedbackEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 

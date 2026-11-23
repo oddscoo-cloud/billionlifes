@@ -14,6 +14,7 @@ export const traitLabels: Record<TraitId, string> = {
 export interface CharacterTrait {
   readonly id: TraitId;
   readonly reason: string;
+  readonly source?: { readonly title: string; readonly choice: string };
 }
 
 export function characterTraits(life: LifeSnapshot): readonly CharacterTrait[] {
@@ -23,8 +24,8 @@ export function characterTraits(life: LifeSnapshot): readonly CharacterTrait[] {
   let community = 0;
   let relocations = 0;
   let familyTime = 0;
-  const learn = (id: TraitId, reason: string): void => {
-    if (!traits.has(id)) traits.set(id, { id, reason });
+  const learn = (id: TraitId, reason: string, source?: CharacterTrait['source']): void => {
+    if (!traits.has(id)) traits.set(id, { id, reason, ...(source ? { source } : {}) });
   };
   for (const event of life.chronicle) {
     if (event.type === 'turning-choice') {
@@ -32,7 +33,7 @@ export function characterTraits(life: LifeSnapshot): readonly CharacterTrait[] {
       resolved.add(event.id);
       const point = turningPoints[event.id];
       const choice = point.responses[event.response];
-      learn(choice.trait, `${point.title} — ${choice.label.toLowerCase()}.`);
+      learn(choice.trait, `${point.title} — ${choice.label.toLowerCase()}.`, { title: point.title, choice: choice.label });
     } else if ((event.type === 'crisis' && event.choice === 'ask-for-help')
       || (event.type === 'family-response' && event.choice === 'support')) {
       learn('open', 'В трудный момент герой обратился за поддержкой.');
