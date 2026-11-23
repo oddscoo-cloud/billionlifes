@@ -20,6 +20,10 @@ body {
     linear-gradient(180deg, #18201f 0, #111516 22rem);
 }
 .masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   border-bottom: 1px solid #ffffff0d;
   padding: .9rem max(1.2rem, calc((100% - 72rem) / 2));
   background: #11151699;
@@ -27,6 +31,17 @@ body {
 }
 .brand { font-weight: 750; letter-spacing: -.025em; white-space: nowrap; }
 .brand span { color: var(--accent); margin-right: .35rem; }
+.masthead-controls { display: flex; align-items: center; gap: .55rem; }
+.language-select { min-height: 2.25rem !important; padding-block: .35rem !important; }
+button.feedback-entry {
+  min-height: 2.25rem;
+  padding: .35rem .65rem;
+  border-radius: .55rem;
+  color: var(--accent);
+  background: transparent;
+  font-size: .86rem;
+  text-align: center;
+}
 main, .notice { width: min(72rem, calc(100% - 2rem)); margin-inline: auto; }
 main { margin-block: clamp(1.25rem, 5vw, 3.5rem); }
 .notice:empty { display: none; }
@@ -413,6 +428,29 @@ button.guide-entry:hover { background: #9acfbb12; }
 .odds-facts dd { margin: 0; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
 .odds-source { display: grid; gap: .45rem; padding-top: .75rem; border-top: 1px solid var(--line); }
 @media (max-width: 37rem) { .odds-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.feedback-dialog {
+  width: min(38rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  padding: clamp(.85rem, 4vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: inherit;
+}
+.feedback-dialog[open] { display: grid; gap: .85rem; }
+.feedback-dialog::backdrop { background: #0b0e11c9; }
+.feedback-form { display: grid; gap: .75rem; }
+.feedback-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.feedback-form textarea { min-height: 7rem; }
+.feedback-status { min-height: 1.3rem; color: var(--accent); font-size: .88rem; }
+@media (max-width: 37rem) {
+  .masthead { align-items: flex-start; }
+  .masthead-controls { align-items: flex-end; flex-direction: column-reverse; }
+  .feedback-fields { grid-template-columns: minmax(0, 1fr); }
+  button.feedback-entry { max-width: 11rem; }
+}
 
 .sibling-card { display: grid; gap: .4rem; border-top: 1px solid var(--line); padding-block-start: .5rem; }
 .sibling-card button { justify-self: start; }

@@ -15,11 +15,31 @@ import { play } from './ui/play';
 import { birthScreen, startScreen } from './ui/start';
 import { summary } from './ui/summary';
 import './ui/styles.css';
+import { feedbackDialog } from './ui/feedback-dialog';
+import { getLanguage, languages, setLanguage, translate } from './ui/i18n';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 const notice = el('div', 'notice');
 notice.setAttribute('role', 'status');
 app.before(notice);
+
+const masthead = document.querySelector<HTMLElement>('.masthead');
+if (masthead) {
+  const controls = el('div', 'masthead-controls');
+  const language = el('select', 'language-select');
+  language.setAttribute('aria-label', 'Язык игры');
+  language.append(...languages.map(([code, label]) => new Option(label, code)));
+  language.value = getLanguage();
+  setLanguage(language.value as (typeof languages)[number][0]);
+  language.addEventListener('change', () => {
+    setLanguage(language.value as (typeof languages)[number][0]);
+    location.reload();
+  });
+  const feedback = feedbackDialog();
+  controls.append(language,
+    button(translate('feedback', 'Предложить или сообщить'), () => feedback.showModal(), 'feedback-entry', 'open-feedback'));
+  masthead.append(controls, feedback);
+}
 
 async function initialize(): Promise<void> {
   try {
