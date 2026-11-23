@@ -6,7 +6,7 @@ import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
 import type { LifeSnapshot } from '../sim/life';
 import type { Memory } from '../sim/relationships';
 import { button, el, facts, heading, panel } from './elements';
-import { ageLabel, eventLabel, peopleLabels } from './labels';
+import { ageLabel, eventLabel, friendRoleLabels, peopleLabels } from './labels';
 import { metric } from './play';
 import { portrait } from './portrait';
 
@@ -97,7 +97,8 @@ export function socialCircle(life: LifeSnapshot, commit?: (next: LifeSnapshot) =
     const memories = el('ol', 'chronicle', ...person.memories.slice(-6).reverse().map((memory) => el('li', '',
       el('span', 'event-age', ageLabel(memory.ageInMonths)),
       el('span', '', memory.kind === 'world' ? worldEvents[memory.event][0] : pastChoices[memory.kind]))));
-    const description = el('div', '', el('p', '', relationshipDescriptions[person.id]));
+    const description = el('div', '', el('p', '', relationshipDescriptions[person.id]),
+      ...(person.id === 'friend' && person.role ? [el('p', 'helper', `Роль в жизни героя: ${friendRoleLabels[person.role]}.`)] : []));
     if (person.country) description.append(el('p', 'helper', `Место знакомства — ${demographics.countries[person.country].name}.`));
     const content = [el('div', 'social-person', portrait(person.id), description), metric('Доверие', person.trust)];
     const card = panel(person.id === 'caregiver' && life.parents.length ? 'Поддержка семьи' : peopleLabels[person.id], ...content, person.memories.length

@@ -12,7 +12,7 @@ import { careerPaths, lifeProjects, plans } from '../sim/growth';
 import type { LifeSnapshot } from '../sim/life';
 import { eventEffects, worldEvents } from '../data/world-events';
 import { diaryEntryLimit, diaryTextLimit } from '../sim/diary';
-import { closePersonIds, memoryKinds } from '../sim/relationships';
+import { closePersonIds, friendRoles, memoryKinds } from '../sim/relationships';
 import { initialPhysicalHealth } from '../sim/health';
 
 export const schemaVersion = 5;
@@ -75,6 +75,7 @@ function validRelationships(value: unknown, age: number): boolean {
   return Array.isArray(value) && value.length >= 1 && value.length <= closePersonIds.length
     && value.every((entry: unknown) => object(entry) && oneOf(entry.id, closePersonIds)
       && integer(entry.trust, 0, 100) && (entry.country === undefined || oneOf(entry.country, countryCodes))
+      && (entry.role === undefined || oneOf(entry.role, friendRoles))
       && Array.isArray(entry.memories)
       && entry.memories.every((memory: unknown) => object(memory) && integer(memory.ageInMonths, 0, age)
         && (memory.kind === 'world' ? validWorldId(memory.event) : oneOf(memory.kind, memoryKinds))))

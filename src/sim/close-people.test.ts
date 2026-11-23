@@ -5,6 +5,7 @@ import { advanceRelatives } from './family';
 import { startLife } from './life';
 import type { LifeSnapshot } from './life';
 import { advanceRomance, availableRomance, chooseRomance, romance } from './romance';
+import { remember } from './relationships';
 import { siblings, visitSibling } from './siblings';
 import { characterTraits } from './traits';
 import { advanceTurningPoint } from './turning-points';
@@ -57,6 +58,15 @@ it('allows adult sympathy to become love with several meetings over time', () =>
   const second = chooseRomance({ ...first, ageInMonths: 222 }, 'spend-time');
   expect(romance(chooseRomance(second, 'love'))?.stage).toBe('love');
   expect(romance(chooseRomance(second, 'end'))).toBeNull();
+});
+
+it('changes a friend role as trust grows or fades', () => {
+  const life = newborn();
+  const relationships = life.relationships.concat({ id: 'friend' as const, trust: 78, memories: [], role: 'friend' as const });
+  const promoted = remember(relationships, 'friend', { kind: 'shared-play', ageInMonths: 50 }, 5);
+  expect(promoted.find(({ id }) => id === 'friend')?.role).toBe('confidant');
+  const distant = remember(promoted, 'friend', { kind: 'took-distance', ageInMonths: 51 }, -70);
+  expect(distant.find(({ id }) => id === 'friend')?.role).toBe('distant');
 });
 
 it('shows illness, recovery and return to stable health', () => {
