@@ -36,6 +36,23 @@ const everyday: readonly EventChoice[] = [
   { id: 'evening-out', mood: 2 }, { id: 'unplanned-visit', mood: 2 }, { id: 'shared-ride', mood: 1 }, { id: 'quiet-routine', mood: 1 },
 ];
 
+const adolescentNegative: readonly EventChoice[] = [
+  { id: 'school-bullying', mood: -8, skills: { resilience: -2 }, contact: ['friend', -4] },
+  { id: 'social-isolation', mood: -7, skills: { communication: -2 } },
+  { id: 'online-harassment', mood: -9, skills: { resilience: -2 }, contact: ['friend', -3] },
+  { id: 'panic-episode', mood: -8, skills: { resilience: -1 } },
+  { id: 'family-conflict', mood: -7, contact: ['caregiver', -5] },
+  { id: 'academic-setback', mood: -6, skills: { academics: -2, resilience: -1 } },
+  { id: 'boundary-violation', mood: -10, skills: { resilience: -2 }, contact: ['friend', -3] },
+  { id: 'friend-group-loss', mood: -7, skills: { communication: -1, resilience: -1 } },
+  { id: 'public-humiliation', mood: -8, skills: { communication: -1, resilience: -1 } },
+  { id: 'sleep-deprivation', mood: -6, skills: { resilience: -2 } },
+  { id: 'discrimination', mood: -9, skills: { resilience: -2, communication: -1 } },
+  { id: 'unsafe-route', mood: -8, skills: { resilience: -1 } },
+  { id: 'financial-pressure-teen', mood: -7, funds: -1 },
+  { id: 'loss-of-future-plan', mood: -6, skills: { resilience: -1 } },
+];
+
 function recentEvents(life: LifeSnapshot, months: number): readonly LifeEvent[] {
   const cutoff = life.ageInMonths - months;
   const events: LifeEvent[] = [];
@@ -123,6 +140,7 @@ function candidates(life: LifeSnapshot): EventChoice[] {
       { id: 'missed-bus', mood: -2 }, { id: 'quiet-school', mood: 1 },
       { id: 'science-day', skills: { academics: 1, creativity: 1 } }, { id: 'lost-notebook', mood: -2 },
       { id: 'team-practice', skills: { communication: 1, resilience: 1 } },
+      ...adolescentNegative,
     );
     if (plan === 'practice-art') pool.push({ id: 'drawing-display', skills: { creativity: 2 }, mood: 2 });
   } else {
@@ -213,10 +231,10 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   if (funds !== development.funds) effects.funds = funds - development.funds;
   let skills = development.skills;
   for (const skill of ['academics', 'creativity', 'communication', 'resilience', 'practical', 'empathy'] as const) {
-    const gain = Math.min(event.skills?.[skill] ?? 0, 100 - skills[skill]);
-    if (gain > 0) {
-      effects[skill] = gain;
-      skills = { ...skills, [skill]: skills[skill] + gain };
+    const change = Math.max(-skills[skill], Math.min(event.skills?.[skill] ?? 0, 100 - skills[skill]));
+    if (change !== 0) {
+      effects[skill] = change;
+      skills = { ...skills, [skill]: skills[skill] + change };
     }
   }
   const familyEvent = event.id === 'sibling-game' || event.id === 'sibling-project' || event.id === 'sibling-reunion';
@@ -225,12 +243,16 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
   if (sibling && sibling.trust < 100) effects.trust = Math.min(2, 100 - sibling.trust);
   let contacts = relationships;
   const person = event.contact?.[0];
+  let appliedPerson: ClosePersonId | undefined;
   if (event.contact && person) {
     const before = relationships.find(({ id }) => id === person);
+    if (event.contact[1] >= 0 || before) {
     const country = person === 'neighbor' || person === 'colleague' ? life.countryOfResidence : undefined;
     contacts = remember(relationships, person, { kind: 'world', ageInMonths, event: event.id }, event.contact[1], country);
     const gained = contacts.find(({ id }) => id === person)!.trust - (before?.trust ?? 35);
     if (gained) effects.trust = gained;
+      appliedPerson = person;
+    }
   }
   return {
     ...life,
@@ -238,7 +260,7 @@ export function advanceWorld(life: LifeSnapshot): LifeSnapshot {
     wellbeing: { ...wellbeing, mood },
     relationships: contacts,
     chronicle: [...life.chronicle, {
-      type: 'world', id: event.id, ageInMonths, effects, ...(variant ? { variant } : {}), country: life.countryOfResidence, ...(sibling ? { sibling: sibling.index } : {}), ...(person ? { person } : {}),
+      type: 'world', id: event.id, ageInMonths, effects, ...(variant ? { variant } : {}), country: life.countryOfResidence, ...(sibling ? { sibling: sibling.index } : {}), ...(appliedPerson ? { person: appliedPerson } : {}),
     }],
   };
 }

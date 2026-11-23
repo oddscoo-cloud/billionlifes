@@ -48,8 +48,15 @@ export const mentalHealthLabels = {
   anxiety: 'Тревожное состояние',
   depression: 'Депрессивное состояние',
   burnout: 'Истощение',
+  'critical-risk': 'Критический риск: нужна срочная поддержка',
   recovering: 'Восстановление',
 };
+export const mentalSeverityLabels = {
+  0: 'Нет заметных признаков',
+  1: 'Лёгкая выраженность',
+  2: 'Сильная выраженность',
+  3: 'Критическая выраженность',
+} as const;
 
 export function ageLabel(months: number): string {
   return months < 12 ? `${months} мес.` : `${Math.floor(months / 12)} г. ${months % 12} мес.`;

@@ -7,7 +7,7 @@ import { griefChoices, initialParents, parentRoles } from '../sim/family';
 import type { BirthConditions } from '../sim/birth';
 import { countryCodes, demographics, sexes } from '../data/demographics';
 import { activities, milestoneAt } from '../sim/actions';
-import { crisisChoices } from '../sim/crisis';
+import { crisisChoices, mentalHealthChoices } from '../sim/crisis';
 import { plans } from '../sim/growth';
 import type { LifeSnapshot } from '../sim/life';
 import { eventEffects, worldEvents } from '../data/world-events';
@@ -122,7 +122,7 @@ function validEvent(event: Record<string, unknown>): boolean {
       return event.ageInMonths === 48 && oneOf(event.choice, ['read-with-caregiver', 'play-with-peers']);
     case 'crisis':
       return typeof event.message === 'string'
-        && (event.choice === undefined || oneOf(event.choice, crisisChoices));
+        && (event.choice === undefined || oneOf(event.choice, [...crisisChoices, ...mentalHealthChoices]));
     case 'action':
       return object(event.action)
         && (event.action.id === 'move' ? oneOf(event.action.destination, countryCodes)
@@ -184,7 +184,7 @@ function validLife(value: unknown): value is LifeSnapshot {
     && oneOf(wellbeing.phase, ['none', 'strain', 'withdrawn', 'recovering', 'resolved'])
     && typeof wellbeing.support === 'boolean'
     && (wellbeing.mentalHealth === undefined || (object(wellbeing.mentalHealth)
-      && oneOf(wellbeing.mentalHealth.condition, ['none', 'anxiety', 'depression', 'burnout', 'recovering'])
+      && oneOf(wellbeing.mentalHealth.condition, ['none', 'anxiety', 'depression', 'burnout', 'critical-risk', 'recovering'])
       && integer(wellbeing.mentalHealth.severity, 0, 3)
       && integer(wellbeing.mentalHealth.months, 0, ageInMonths)
       && typeof wellbeing.mentalHealth.supported === 'boolean'))

@@ -27,7 +27,7 @@ import type { LifeSnapshot } from '../sim/life';
 import { button, el, facts, heading, panel } from './elements';
 import {
   ageLabel, childhoodLabels, decisionLabels, educationLabels, employmentLabels, eventLabel,
-  mentalHealthLabels, peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
+  mentalHealthLabels, mentalSeverityLabels, peopleLabels, phaseLabels, planLabels, skillLabels, wealthLabel,
 } from './labels';
 import { actionEffects, childhoodEffects, crisisEffects, decisionContext, planEffects, riskEffects } from './choice-copy';
 import { innerVoice } from '../sim/inner-voice';
@@ -286,7 +286,11 @@ function wellbeingPanel(life: LifeSnapshot, commit: PlayHandlers['commit']): HTM
     el('p', 'helper', health.detail));
   const mental = life.wellbeing.mentalHealth ?? { condition: 'none' as const, severity: 0 as const };
   section.append(facts([['Психическое состояние', mentalHealthLabels[mental.condition]],
-    ...(mental.condition !== 'none' ? [['Сила состояния', mental.severity] as const] : [])]));
+    ['Выраженность', mentalSeverityLabels[mental.severity]],
+    ...(mental.condition !== 'none' ? [
+      ['Длительность', `${mental.months} мес.`] as const,
+      ['Поддержка', mental.supported ? 'Есть' : 'Не подключена'] as const,
+    ] : [])]));
   if (life.ageInMonths < 18 * 12) return section;
   if (!current) {
     section.append(facts([['Романтика', 'Пока нет']]));

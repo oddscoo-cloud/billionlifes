@@ -3,10 +3,12 @@ import type { LifeSnapshot } from './life';
 import { remember } from './relationships';
 
 export const crisisChoices = ['ask-for-help', 'wait', 'change-group'] as const;
-export const mentalHealthChoices = ['seek-care', 'ask-for-support', 'rest-and-routine', 'continue-as-usual'] as const;
+export const mentalHealthChoices = [
+  'seek-care', 'ask-for-support', 'rest-and-routine', 'continue-as-usual', 'urgent-support',
+] as const;
 export type CrisisChoice = typeof crisisChoices[number] | typeof mentalHealthChoices[number];
 export type CrisisPhase = 'none' | 'strain' | 'withdrawn' | 'recovering' | 'resolved';
-export type MentalHealthCondition = 'none' | 'anxiety' | 'depression' | 'burnout' | 'recovering';
+export type MentalHealthCondition = 'none' | 'anxiety' | 'depression' | 'burnout' | 'critical-risk' | 'recovering';
 
 export interface MentalHealth {
   readonly condition: MentalHealthCondition;
@@ -63,7 +65,15 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
       if (event.type === 'turning-point') return score + (event.id === 'lost-job' ? 3 : 2);
       if (event.type === 'turning-choice' || event.type === 'turning-consequence') return score + 1;
       if (event.type === 'romance' && event.step === 'end') return score + 3;
-      if (event.type === 'world' && (event.effects.mood ?? 0) <= -3) return score + 1;
+      if (event.type === 'world') {
+        const moodLoss = event.effects.mood ?? 0;
+        if (life.ageInMonths >= 12 * 12) {
+          if (moodLoss <= -7) return score + 3;
+          if (moodLoss <= -3) return score + 2;
+        } else if (moodLoss <= -3) {
+          return score + 1;
+        }
+      }
       return score;
     }, 0);
     return Math.max(0, raw - Math.floor(life.development.skills.resilience / 20));
@@ -82,7 +92,7 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
   }
 
   function advanceMentalHealth(life: LifeSnapshot): LifeSnapshot {
-    if (life.ageInMonths < 12 || life.status.type !== 'active') return life;
+    if (life.ageInMonths < 12 * 12 || life.status.type !== 'active') return life;
     if (life.wellbeing.phase !== 'none' && life.wellbeing.phase !== 'resolved') return life;
     const current = life.wellbeing.mentalHealth ?? {
       condition: 'none' as const, severity: 0 as const, months: 0, supported: false,
@@ -104,6 +114,15 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
         ...life,
         wellbeing: { ...life.wellbeing, mentalHealth: { ...current, condition: 'depression', severity: 2 } },
       }, 'Тревога не отступала несколько месяцев. Стало трудно радоваться и заботиться о себе, даже когда внешне всё выглядело обычно.');
+    }
+    if ((current.condition === 'depression' || current.condition === 'burnout')
+      && current.months >= 2 && stress >= 6 && !support) {
+      return mentalEvent({
+        ...life,
+        wellbeing: { ...life.wellbeing, mentalHealth: {
+          condition: 'critical-risk', severity: 3, months: current.months, supported: false,
+        } },
+      }, 'Состояние стало критическим: появились мысли о том, чтобы причинить себе вред. Нужна срочная помощь и человек рядом.');
     }
     const months = current.months + 1;
     if (current.condition === 'none') return life;
@@ -167,6 +186,13 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
 export function availableCrisisChoices(life: LifeSnapshot): readonly CrisisOption[] {
   if (life.status.type !== 'decision') return [];
   if (life.status.decision === 'mental-health') {
+    if (life.wellbeing.mentalHealth?.condition === 'critical-risk') {
+      return [
+        { id: 'urgent-support', label: 'Обратиться за срочной помощью' },
+        { id: 'ask-for-support', label: 'Сразу рассказать близкому человеку' },
+        { id: 'seek-care', label: 'Составить план лечения со специалистом' },
+      ];
+    }
     return [
       { id: 'seek-care', label: 'Обратиться за профессиональной помощью' },
       { id: 'ask-for-support', label: 'Рассказать близкому человеку' },
@@ -187,14 +213,17 @@ export function resolveCrisisChoice(life: LifeSnapshot, choice: CrisisChoice): L
     const mental: MentalHealth = life.wellbeing.mentalHealth ?? {
       condition: 'none', severity: 0, months: 0, supported: false,
     };
-    const next = choice === 'seek-care'
-      ? { condition: 'recovering' as const, severity: Math.max(1, mental.severity - 1) as 0 | 1 | 2 | 3, months: 0, supported: true }
+    const next = choice === 'urgent-support'
+      ? { condition: 'recovering' as const, severity: 2 as const, months: 0, supported: true }
+      : choice === 'seek-care'
+        ? { condition: 'recovering' as const, severity: Math.max(1, mental.severity - 1) as 0 | 1 | 2 | 3, months: 0, supported: true }
       : choice === 'ask-for-support'
         ? { ...mental, severity: Math.max(1, mental.severity - 1) as 0 | 1 | 2 | 3, months: 0, supported: true }
         : choice === 'rest-and-routine'
           ? { condition: 'recovering' as const, severity: mental.severity, months: 0, supported: true }
           : { ...mental, months: mental.months + 1, supported: false };
     const messages = {
+      'urgent-support': 'Герой обратился за срочной помощью и не остался один. Теперь у него есть план безопасности и поддержка специалистов.',
       'seek-care': 'Герой обратился за профессиональной помощью. Сразу не стало легко, но появился план восстановления.',
       'ask-for-support': 'Герой рассказал близкому человеку, как ему на самом деле. Разговор не решил всё, но теперь не пришлось оставаться с этим одному.',
       'rest-and-routine': 'Герой отменил часть дел, восстановил сон и оставил в расписании только самое необходимое.',
@@ -203,7 +232,7 @@ export function resolveCrisisChoice(life: LifeSnapshot, choice: CrisisChoice): L
     return {
       ...life,
       status: { type: 'active' },
-      wellbeing: { ...life.wellbeing, mood: Math.min(100, life.wellbeing.mood + 5), mentalHealth: next },
+      wellbeing: { ...life.wellbeing, mood: Math.min(100, life.wellbeing.mood + (choice === 'urgent-support' ? 8 : 5)), mentalHealth: next },
       relationships: choice === 'ask-for-support'
         ? remember(life.relationships, 'caregiver', { kind: 'asked-for-help', ageInMonths: life.ageInMonths }, 8)
         : life.relationships,

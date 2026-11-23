@@ -23,6 +23,7 @@ export const crisisEffects: Record<CrisisChoice, string> = {
   'ask-for-support': 'Честный разговор с близким человеком уменьшит одиночество и укрепит связь.',
   'rest-and-routine': 'Снижение нагрузки и сон помогут восстановить силы, если дать себе время.',
   'continue-as-usual': 'Состояние останется без поддержки. Если трудности продолжатся, оно может усилиться.',
+  'urgent-support': 'Срочная помощь и человек рядом снизят непосредственный риск и запустят план безопасности.',
 };
 
 export const decisionContext: Record<Extract<LifeStatus, { type: 'decision' }>['decision'], string> = {

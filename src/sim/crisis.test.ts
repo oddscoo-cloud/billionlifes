@@ -81,3 +81,29 @@ it('can worsen an unsupported anxious state into depression', () => {
   const depressed = advanceWellbeing({ ...monthLater, ageInMonths: 242 });
   expect(depressed.wellbeing.mentalHealth?.condition).toBe('depression');
 });
+
+it('pauses at critical risk and offers urgent support without a harmful outcome', () => {
+  const life = startLife(createLife({ name: 'Лена', sex: 'female', seed: 18 }));
+  const stressed: LifeSnapshot = {
+    ...life,
+    ageInMonths: 17 * 12,
+    wellbeing: {
+      ...life.wellbeing,
+      mentalHealth: { condition: 'depression', severity: 2, months: 2, supported: false },
+    },
+    chronicle: [
+      ...life.chronicle,
+      { type: 'world', id: 'school-bullying', ageInMonths: 195, effects: { mood: -8 } },
+      { type: 'world', id: 'online-harassment', ageInMonths: 196, effects: { mood: -9 } },
+    ],
+  };
+  const paused = advanceWellbeing(stressed);
+  expect(paused.status).toEqual({ type: 'decision', decision: 'mental-health' });
+  expect(paused.wellbeing.mentalHealth?.condition).toBe('critical-risk');
+  expect(availableCrisisChoices(paused).map(({ id }) => id)).toContain('urgent-support');
+
+  const supported = resolveCrisisChoice(paused, 'urgent-support');
+  expect(supported.status).toEqual({ type: 'active' });
+  expect(supported.wellbeing.mentalHealth).toMatchObject({ condition: 'recovering', supported: true });
+  expect(supported.chronicle.at(-1)).toMatchObject({ type: 'crisis' });
+});
