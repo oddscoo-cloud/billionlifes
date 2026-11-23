@@ -486,7 +486,7 @@ export function advanceTurningConsequences(life: LifeSnapshot): LifeSnapshot {
     if (event.ageInMonths < life.ageInMonths - 2) break;
     if (event.type !== 'turning-choice' || event.ageInMonths !== life.ageInMonths - 2) continue;
     const selected = turningPoints[event.id].responses[event.response];
-    const changed = applyImpact(life, selected.later, 'skills' in selected ? selected.skills : undefined);
+    const changed = applyImpact(life, selected.later);
     const relationships = event.id === 'friend-conflict'
       ? remember(life.relationships, 'friend', {
         kind: event.response === 0 ? 'shared-hardship' : 'took-distance', ageInMonths: life.ageInMonths,

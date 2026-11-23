@@ -62,6 +62,12 @@ export function advancePhysicalHealth(life: LifeSnapshot): LifeSnapshot {
       },
     };
   }
+  if (current.condition === 'recovering' && illness && current.supported && current.months >= 3) {
+    return {
+      ...life,
+      physicalHealth: { condition: 'chronic', severity: 2, months: 0, supported: true },
+    };
+  }
   if (current.condition === 'serious') {
     return { ...life, physicalHealth: { ...current, months: current.months + 1 } };
   }

@@ -40,7 +40,16 @@ export function advanceWellbeing(life: LifeSnapshot): LifeSnapshot {
       : 'После насмешек на занятии стало трудно возвращаться в группу.';
     return {
       ...life,
-      wellbeing: { mood: Math.max(0, wellbeing.mood - 15), phase: 'strain', monthsInPhase: 0, support: false },
+      wellbeing: {
+        ...wellbeing,
+        mood: Math.max(0, wellbeing.mood - 15),
+        phase: 'strain',
+        monthsInPhase: 0,
+        support: false,
+        mentalHealth: wellbeing.mentalHealth ?? {
+          condition: 'none', severity: 0, months: 0, supported: false,
+        },
+      },
       status: { type: 'decision', decision: 'school-crisis' },
       chronicle: [...life.chronicle, {
         type: 'crisis', ageInMonths, message,
