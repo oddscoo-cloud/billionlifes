@@ -4,6 +4,7 @@ import type { LifeSnapshot } from '../sim/life';
 import { parentLabels } from '../sim/family';
 import { button, el, facts, heading } from './elements';
 import { ageLabel, wealthLabel } from './labels';
+import { translate } from './i18n';
 
 function intro(...content: Node[]): HTMLElement {
   return el('section', 'intro', el('div', 'intro-copy', ...content), el('div', 'intro-art'));
@@ -59,31 +60,32 @@ function randomnessGuide(): HTMLDialogElement {
 export function startScreen(
   life: LifeSnapshot | null, resume: () => void, birth: () => void,
 ): HTMLElement {
-  const title = heading('Целая жизнь впереди');
+  const title = heading(translate('home-title', 'Целая жизнь впереди'));
   const guide = randomnessGuide();
-  const guideAction = button('Как работают шансы', () => guide.showModal(), 'guide-entry', 'open-randomness-guide');
+  const guideAction = button(translate('odds', 'Как работают шансы'), () => guide.showModal(), 'guide-entry', 'open-randomness-guide');
 
   const story = el('section', 'home-story',
-    el('p', 'eyebrow', life ? 'Сохранённая история' : 'Новая история'),
+    el('p', 'eyebrow', life ? translate('home-eyebrow', 'Сохранённая история') : translate('home-eyebrow-new', 'Новая история')),
     title,
     el('p', 'lede', life
-      ? 'Каждый выбор оставляет след. Вернитесь к жизни героя или начните другую историю с чистого листа.'
-      : 'Создайте героя, проживайте месяцы или годы и принимайте решения по мере взросления. Игра сохраняет каждый ход.'));
+      ? translate('home-lede-saved', 'Каждый выбор оставляет след. Вернитесь к жизни героя или начните другую историю с чистого листа.')
+      : translate('home-lede', 'Создайте героя, проживайте месяцы или годы и принимайте решения по мере взросления. Игра сохраняет каждый ход.')));
 
   const status = life
     ? el('div', 'saved-life',
-      el('p', 'saved-life-label', 'Сохранённая жизнь'),
+      el('p', 'saved-life-label', translate('home-eyebrow', 'Сохранённая жизнь')),
       el('p', 'saved-life-name', life.birth.name),
       el('p', 'saved-life-meta', `${ageLabel(life.ageInMonths)} · ${life.status.type === 'dead' ? 'Жизнь завершена' : 'История продолжается'}`))
     : el('div', 'saved-life saved-life-empty',
-      el('p', 'saved-life-label', 'Сохранённая жизнь'),
-      el('p', 'saved-life-name', 'Пока нет'),
+      el('p', 'saved-life-label', translate('home-eyebrow', 'Сохранённая жизнь')),
+        el('p', 'saved-life-name', translate('saved-none', 'Пока нет')),
       el('p', 'saved-life-meta', 'Запустите первую жизнь'));
 
   const actions = el('div', 'home-actions-list');
-  if (life) actions.append(button(life.status.type === 'dead' ? 'Открыть итог жизни' : 'Продолжить',
+  if (life) actions.append(button(life.status.type === 'dead'
+    ? translate('open-summary', 'Открыть итог жизни') : translate('continue', 'Продолжить'),
     resume, 'primary', 'resume'));
-  actions.append(button('Новая жизнь', birth, life ? 'secondary' : 'primary', 'new-life'));
+  actions.append(button(translate('new-life', 'Новая жизнь'), birth, life ? 'secondary' : 'primary', 'new-life'));
 
   const actionCard = el('aside', 'home-action-card',
     el('p', 'home-card-kicker', 'Продолжение'),
